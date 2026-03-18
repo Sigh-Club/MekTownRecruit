@@ -498,6 +498,11 @@ function MTR.InitDB()
                 profile.enableDebug = profile.debug == true
             end
             profile.debug = nil
+
+            -- Normalize legacy checkbox-backed flags to strict booleans so old
+            -- saves cannot accidentally enable features through truthy values.
+            profile.enableGuildInvites = (profile.enableGuildInvites == true)
+            profile.inviteAnnounce = (profile.inviteAnnounce == true)
         end
     end
     MTR.RefreshDB()

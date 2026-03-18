@@ -427,7 +427,7 @@ local inviteFrame = CreateFrame("Frame")
 inviteFrame:RegisterEvent("CHAT_MSG_GUILD")
 inviteFrame:SetScript("OnEvent", function(self, event, message, sender)
     if not MTR.initialized or not MTR.db then return end
-    if not MTR.db.enableGuildInvites then return end
+    if MTR.db.enableGuildInvites ~= true then return end
     if sender == MTR.playerName then return end
     if not MTR.CanInvite() then return end
     if MTR.recentInvites[sender] and (GetTime() - MTR.recentInvites[sender]) < MTR.db.inviteCooldown then return end
@@ -441,13 +441,8 @@ inviteFrame:SetScript("OnEvent", function(self, event, message, sender)
 
     MTR.recentInvites[sender] = GetTime()
     InviteUnit(sender)
-    if MTR.db.inviteAnnounce then
+    if MTR.db.inviteAnnounce == true then
         MTR.SendChatSafe(sender .. " has been invited to the raid/party.", "GUILD")
-    end
-    if MTR.db.inviteWelcomeMsg ~= "" then
-        MTR.After(3, function()
-            MTR.SendChatSafe(MTR.db.inviteWelcomeMsg:gsub("{name}", sender), "WHISPER", nil, sender)
-        end)
     end
     MTR.dprint("Auto-invited:", sender)
 end)
@@ -481,6 +476,7 @@ local function SendGuildJoinWelcome(name)
     if not MTR.initialized or not MTR.db then return end
     if not (MTR.isOfficer or MTR.isGM) then return end
     if not name or name == "" then return end
+    if name == MTR.playerName then return end
 
     local msg = MTR.db.inviteWelcomeMsg
     if type(msg) ~= "string" then return end

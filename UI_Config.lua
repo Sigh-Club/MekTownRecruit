@@ -738,14 +738,14 @@ local function CreateMainWindow()
 
         mainWin._ckInvEnable   = MakeCK("InvEn",  t, "Enable auto-invite from guild chat", FIELD_X,  -116)
         mainWin._ckInvAnnounce = MakeCK("InvAnn", t, "Announce invite in guild chat",      FIELD_X, -144)
-        mainWin._ckInvEnable:SetScript("OnClick",   function(s) MTR.db.enableGuildInvites=s:GetChecked() end)
-        mainWin._ckInvAnnounce:SetScript("OnClick", function(s) MTR.db.inviteAnnounce=s:GetChecked() end)
+        mainWin._ckInvEnable:SetScript("OnClick",   function(s) MTR.db.enableGuildInvites=(s:GetChecked() and true or false) end)
+        mainWin._ckInvAnnounce:SetScript("OnClick", function(s) MTR.db.inviteAnnounce=(s:GetChecked() and true or false) end)
 
         local lbl1 = t:CreateFontString(nil,"OVERLAY","GameFontNormal")
         lbl1:SetPoint("TOPLEFT", t, "TOPLEFT", LEFT, -182)
         lbl1:SetWidth(PANEL_W)
         lbl1:SetJustifyH("LEFT")
-        lbl1:SetText("Welcome whisper after invite (blank = off):")
+        lbl1:SetText("Welcome whisper to new guild members (blank = off):")
         mainWin._invWelcomeEB = MakeIn("InvWelcome", t, FIELD_W, FIELD_X, -202)
         mainWin._invWelcomeEB:SetScript("OnTextChanged",function(s) MTR.db.inviteWelcomeMsg=s:GetText() end)
 
