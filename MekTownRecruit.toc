@@ -5,23 +5,24 @@
 ## Version: 2.1.1-pre
 ## SavedVariables: MekTownRecruitDB
 
-Core.lua
-GuildData.lua
-Settings.lua
-DKP.lua
-Auction.lua
-Roll.lua
-Attendance.lua
-Inactivity.lua
-Recruit.lua
-LootDetect.lua
-GuildAds.lua
-GuildTree.lua
-GroupRadar.lua
-CharVault.lua
-UI_Widgets.lua
-UI_Config.lua
-UI_Member.lua
-UI_CharVault.lua
-Minimap.lua
-Commands.lua
+Core/Core.lua
+Core/GuildData.lua
+Core/Settings.lua
+UI/MTR_Tooltip.lua
+Modules/DKP/DKP.lua
+Modules/DKP/Auction.lua
+Modules/DKP/Roll.lua
+Modules/Guild/Attendance.lua
+Modules/Guild/Inactivity.lua
+Modules/Recruit/Recruit.lua
+Modules/DKP/LootDetect.lua
+Modules/Recruit/GuildAds.lua
+Modules/Guild/GuildTree.lua
+Modules/Social/GroupRadar.lua
+Modules/Vault/CharVault.lua
+UI/UI_Widgets.lua
+UI/UI_Config.lua
+UI/UI_Member.lua
+UI/UI_CharVault.lua
+UI/Minimap.lua
+Commands/Commands.lua

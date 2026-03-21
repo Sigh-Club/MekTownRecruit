@@ -40,19 +40,6 @@ local function FT()
     return MTR.db.familyTree
 end
 
-local function GetAlts(mainName)
-    local ft = FT()
-    if not ft then return {} end
-    local alts = {}
-    for name, entry in pairs(ft) do
-        if not entry.isMain and entry.main == mainName then
-            alts[#alts + 1] = name
-        end
-    end
-    table.sort(alts)
-    return alts
-end
-
 -- ============================================================================
 -- SYNC
 -- ============================================================================
@@ -530,11 +517,9 @@ gtMsgFrame:SetScript("OnEvent", function(_, _, prefix, message, _, sender)
         gtRecv = { rev = tonumber(rev) or 0, hash = hash or "0", expected = tonumber(expected) or 0, chunks = {}, from = senderName }
     elseif cmd == "D" and gtRecv then
         if senderName ~= gtRecv.from then return end
-        if not (MTR.IsGuildOfficerName and MTR.IsGuildOfficerName(senderName)) then return end
         gtRecv.chunks[#gtRecv.chunks + 1] = payload
     elseif cmd == "END" and gtRecv then
         if senderName ~= gtRecv.from then return end
-        if not (MTR.IsGuildOfficerName and MTR.IsGuildOfficerName(senderName)) then return end
         local st = GTSyncState()
         local incomingRev = tonumber(gtRecv.rev) or 0
         local localRev = tonumber(st.revision or 0)
@@ -619,9 +604,11 @@ gtInitFrame:SetScript("OnEvent", function()
         if MTR.initialized and IsInGuild() then
             GuildRoster()  -- request fresh roster data
             MTR.After(2, function()
-                ScanGuildNotes()
-                local st = GTSyncState()
-                GTBroadcast("GT:REQ:" .. tostring(st.hash or "0"))
+                if MTR.isOfficer or MTR.isGM then
+                    ScanGuildNotes()
+                    local st = GTSyncState()
+                    GTBroadcast("GT:REQ:" .. tostring(st.hash or "0"))
+                end
             end)
         end
     end)

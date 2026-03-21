@@ -123,7 +123,9 @@ local function CreateMainWindow()
     mainWin = CreateFrame("Frame", "MekTownMainWindow", UIParent)
     mainWin:SetSize(920, 680)
     mainWin:SetPoint("CENTER")
-    mainWin:SetFrameStrata("MEDIUM")
+    mainWin:SetFrameStrata("HIGH")
+    mainWin:SetToplevel(true)
+    if mainWin.SetClampedToScreen then mainWin:SetClampedToScreen(true) end
     if mainWin.SetClipsChildren then mainWin:SetClipsChildren(true) end
     -- Window border only (no bgFile so our textures show through)
     mainWin:SetBackdrop({
@@ -154,10 +156,16 @@ local function CreateMainWindow()
     mainWin:EnableMouse(true)
     mainWin:SetMovable(true)
     mainWin:SetResizable(true)
-    mainWin:SetMinResize(700, 500)
+    mainWin:SetMinResize(920, 680)
+    if mainWin.SetMaxResize then mainWin:SetMaxResize(1280, 900) end
     mainWin:RegisterForDrag("LeftButton")
     mainWin:SetScript("OnDragStart", mainWin.StartMoving)
     mainWin:SetScript("OnDragStop",  mainWin.StopMovingOrSizing)
+    mainWin:SetScript("OnShow", function(self)
+        self:SetFrameStrata("HIGH")
+        self:SetToplevel(true)
+        if self.Raise then self:Raise() end
+    end)
     mainWin:Hide()
 
     -- Resize grip (bottom-right corner)
@@ -168,7 +176,10 @@ local function CreateMainWindow()
     resizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     resizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     resizeGrip:SetScript("OnMouseDown", function() mainWin:StartSizing("BOTTOMRIGHT") end)
-    resizeGrip:SetScript("OnMouseUp",   function() mainWin:StopMovingOrSizing() end)
+    resizeGrip:SetScript("OnMouseUp",   function()
+        mainWin:StopMovingOrSizing()
+        if mainWin.Raise then mainWin:Raise() end
+    end)
 
     -- ---- TITLE BAR: UI-DialogBox-Header tinted blood-red for Orky look ----
     -- This texture is a natural parchment-banner shape built into WoW 3.3.5
@@ -210,7 +221,7 @@ local function CreateMainWindow()
     -- WORKSPACE & TAB SYSTEM
     -- =========================================================================
     local WORKSPACES = {
-        { name = "Utility", color = "|cff00ccff", tabs = {"Vault", "Radar", "Standings", "Roll"} },
+        { name = "Utility", color = "|cff00ccff", tabs = {"Vault", "Radar", "Standings", "Roll", "Profile"} },
         { name = "Guild",   color = "|cffff2020", tabs = {"Recruit", "Ads", "DKP", "Auction", "Inactive", "Guild"} },
         { name = "Admin",   color = "|cffd4af37", tabs = {"Profile", "Access"} },
     }
@@ -268,6 +279,13 @@ local function CreateMainWindow()
         return HasGuildAccess()
     end
 
+    local function IsTabAllowed(tabDisplayName)
+        if tabDisplayName == "Ads" then
+            return (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) or false
+        end
+        return true
+    end
+
     -- Function to show specific workspace
     local function ShowWS(wsName, preferredTab)
         if not IsWorkspaceAllowed(wsName) then
@@ -289,7 +307,7 @@ local function CreateMainWindow()
         for _, b in ipairs(tabBtns) do
             local show = false
             for _, t in ipairs(ws.tabs) do
-                if b._tabDisplayName == t then
+                if b._tabDisplayName == t and IsTabAllowed(t) then
                     show = true
                     break
                 end
@@ -479,7 +497,7 @@ local function CreateMainWindow()
         scroll:SetPoint("TOPLEFT", t, "TOPLEFT", 6, -6)
         scroll:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -28, 8)
         local content = CreateFrame("Frame", nil, scroll)
-        content:SetWidth(820) content:SetHeight(400)
+        content:SetWidth(820) content:SetHeight(520)
         scroll:SetScrollChild(content)
 
         local hdr = content:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
@@ -517,6 +535,23 @@ local function CreateMainWindow()
         noteLbl:SetPoint("TOPLEFT",pLabel,"BOTTOMLEFT",0,-32)
         noteLbl:SetWidth(600) noteLbl:SetWordWrap(true) noteLbl:SetJustifyH("LEFT")
         noteLbl:SetText("|cffd4af37Tip:|r Deleting the Default profile is not allowed. Create a new profile first, then switch to it before deleting others.")
+
+        local autoHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        autoHdr:SetPoint("TOPLEFT", noteLbl, "BOTTOMLEFT", 0, -26)
+        autoHdr:SetText("|cffd4af37Auto-Close Windows|r")
+
+        local autoDesc = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        autoDesc:SetPoint("TOPLEFT", autoHdr, "BOTTOMLEFT", 0, -6)
+        autoDesc:SetWidth(760)
+        autoDesc:SetWordWrap(true)
+        autoDesc:SetJustifyH("LEFT")
+        autoDesc:SetText("|cffaaaaaaOptional quality-of-life safety for raids and combat: automatically hide addon windows in combat and/or when entering instance content.|r")
+
+        mainWin._ckAutoCloseCombat = MakeCK("UiAutoCloseCombat", content, "Close addon windows when entering combat", 10, -186)
+        mainWin._ckAutoCloseCombat:SetScript("OnClick", function(s) SaveBool("uiAutoCloseOnCombat", s:GetChecked()) end)
+
+        mainWin._ckAutoCloseInstance = MakeCK("UiAutoCloseInstance", content, "Close addon windows when entering instances (party/raid/pvp/arena)", 10, -214)
+        mainWin._ckAutoCloseInstance:SetScript("OnClick", function(s) SaveBool("uiAutoCloseOnInstance", s:GetChecked()) end)
 
         local function RebuildPDD()
             if not MekTownRecruitDB or not MekTownRecruitDB.profiles then return end
@@ -1047,6 +1082,33 @@ local function CreateMainWindow()
         guildFmtHint:SetWordWrap(true)
         guildFmtHint:SetText("|cff9a9a9aFormat: Invite Keywords = one per line. Auto-Responses = trigger|response per line. MOTD Templates = key=value per line.|r")
         y = y - 30
+
+        MakeSep(content, "Quick Open", y)
+        y = y - 18
+        local openTreeBtn = MakeBTStd(content, "Open Guild Tree", "MD")
+        openTreeBtn:SetPoint("TOPLEFT", content, "TOPLEFT", FIELD_X, y)
+        openTreeBtn:SetScript("OnClick", function()
+            if mainWin and mainWin.Hide then mainWin:Hide() end
+            if MTR.OpenCharVaultToTab then
+                MTR.OpenCharVaultToTab("Guild Tree")
+            elseif MTR.OpenCharVault then
+                MTR.OpenCharVault()
+                if MTR.vaultWin and MTR.vaultWin._showTab then MTR.vaultWin._showTab("Guild Tree") end
+            end
+        end)
+
+        local openBankBtn = MakeBTStd(content, "Open Guild Bank", "MD")
+        openBankBtn:SetPoint("LEFT", openTreeBtn, "RIGHT", 8, 0)
+        openBankBtn:SetScript("OnClick", function()
+            if mainWin and mainWin.Hide then mainWin:Hide() end
+            if MTR.OpenCharVaultToTab then
+                MTR.OpenCharVaultToTab("Guild Bank")
+            elseif MTR.OpenCharVault then
+                MTR.OpenCharVault()
+                if MTR.vaultWin and MTR.vaultWin._showTab then MTR.vaultWin._showTab("Guild Bank") end
+            end
+        end)
+        y = y - 42
 
         local inviteHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         inviteHdr:SetPoint("TOPLEFT", content, "TOPLEFT", LEFT, y)
@@ -2104,6 +2166,8 @@ local function CreateMainWindow()
         local ck_rcMini = _G["MekCK_RcMinimap"] if ck_rcMini then ck_rcMini:SetChecked(cfg.minimapButton ~= false) end
         local ck_rcDbg = _G["MekCK_RcDebug"]   if ck_rcDbg  then ck_rcDbg:SetChecked(cfg.enableDebug == true) end
         local ck_rcIgn = _G["MekCK_RcIgnAds"]  if ck_rcIgn  then ck_rcIgn:SetChecked(cfg.ignoreAds ~= false) end
+        if mainWin._ckAutoCloseCombat then mainWin._ckAutoCloseCombat:SetChecked(cfg.uiAutoCloseOnCombat == true) end
+        if mainWin._ckAutoCloseInstance then mainWin._ckAutoCloseInstance:SetChecked(cfg.uiAutoCloseOnInstance == true) end
         local eb_addReq = _G["MekIn_AddReq"]    if eb_addReq then eb_addReq:SetText(cfg.additionalRequired or "") end
         if mainWin._slIgnore then mainWin._slIgnore:SetValue(cfg.ignoreDuration or 300) end
 
@@ -2139,9 +2203,7 @@ local function CreateMainWindow()
 
         -- Guild Utils / Standings ─────────────────────────────────────────────
         if mainWin._refreshGuildTab then mainWin._refreshGuildTab() end
-        if mainWin._standRows and mainWin._standContent then
-            -- Note: Standings usually auto-refreshes OnShow, but we guard it here
-        end
+        -- Note: Standings usually auto-refreshes OnShow, but we guard it here
 
         -- DKP tab ──────────────────────────────────────────────────────
         local ck_dkpEn = _G["MekCK_DKPEn"]   if ck_dkpEn   then ck_dkpEn:SetChecked(cfg.dkpEnabled ~= false) end

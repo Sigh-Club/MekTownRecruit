@@ -228,6 +228,7 @@ rhInit:RegisterEvent("PLAYER_LOGIN")
 rhInit:SetScript("OnEvent", function()
     MTR.After(12, function()
         if not IsInGuild() then return end
+        if not (MTR.isOfficer or MTR.isGM) then return end
         local st = RHState()
         RHSend("RH:REQ:" .. RHSanitize(MTR.playerName or "?") .. ":" .. tostring(st.hash or "0"))
     end)

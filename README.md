@@ -18,7 +18,6 @@ MekTown Recruit combines recruiting, DKP, attendance, guild bank history, group-
 - DKP ledger with award/deduct/set/publish/snapshot sync.
 - Attendance and boss-kill tracking.
 - Guild Tree (main/alt mapping) with sync.
-- Guild Ads posting tools.
 - Group Radar and LFG helper views for members.
 - Character Vault + Guild Bank snapshot.
 - Guild Bank Ledger with long retention (far beyond default bank log window).
@@ -111,7 +110,6 @@ Suggested quiet ledger test mode:
 
 ### Guild Utilities
 
-- `/mek gads start|stop|now`
 - `/mek inactive kick`
 - `/mek inactive whitelist add <name>`
 - `/mek inactive whitelist remove <name>`
@@ -128,7 +126,6 @@ Tabs are visible to all users, but actions are rank-gated.
   - DKP write flows
   - Loot/auction administration
   - Inactivity and kick actions
-  - Guild Ads control
 - Member-facing actions:
   - Group Radar
   - Vault/member views

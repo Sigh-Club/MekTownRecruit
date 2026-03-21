@@ -34,23 +34,27 @@ initFrame:SetScript("OnEvent",function(self,event)
         if MTR.EnsureGuildIdentity then
             MTR.EnsureGuildIdentity()
         end
+        if MTR.ApplyGuildPresetIfNeeded then
+            MTR.ApplyGuildPresetIfNeeded()
+        end
 
         -- Always enable offline member visibility for the whole session.
         SetGuildRosterShowOffline(true)
         GuildRoster()
 
         -- Restore GuildAds auto-posting if it was active last session
-        if MTR.GuildAds then MTR.GuildAds.RestoreState() end
+        if MTR.GuildAds and (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then MTR.GuildAds.RestoreState() end
 
         -- Login sync:
         --   • Officers broadcast their current balances/history snapshot
         --   • Everyone requests the latest verified snapshot so fresh logins
         --     converge even if they were offline during the last award wave.
         MTR.After(8, function()
-            if IsInGuild() and MTR.DKPRequestFullSync then
+            local canSyncPing = (MTR.isOfficer or MTR.isGM)
+            if canSyncPing and IsInGuild() and MTR.DKPRequestFullSync then
                 MTR.DKPRequestFullSync()
             end
-            if IsInGuild() then
+            if canSyncPing and IsInGuild() then
                 local gbHash = "0"
                 if MTR.GetSyncAuditStatus then
                     local ss = MTR.GetSyncAuditStatus()
@@ -62,10 +66,10 @@ initFrame:SetScript("OnEvent",function(self,event)
                     SendAddonMessage("MekTownGB", "GB:REQ:" .. tostring(MTR.playerName or "?") .. ":" .. tostring(gbHash), "GUILD")
                 end
             end
-            if IsInGuild() and MTR.GuildBankLedger and MTR.GuildBankLedger.RequestSync then
+            if canSyncPing and IsInGuild() and MTR.GuildBankLedger and MTR.GuildBankLedger.RequestSync then
                 MTR.GuildBankLedger.RequestSync()
             end
-            if MTR.isOfficer and IsInGuild() then
+            if canSyncPing and IsInGuild() then
                 MTR.DKPSyncToRaidSafe()
             end
         end)
@@ -130,9 +134,11 @@ SlashCmdList["MEKTOWN"]=function(msg)
         print("  /mek chars               - Open Character Vault (all alts)")
   print("  /mek radar               - Open GroupRadar group finder")
         print("  /mek lfg                 - Open Find Group / post LFG")
-        print("  /mek gads start          - Start guild ad auto-posting")
-        print("  /mek gads stop           - Stop guild ad auto-posting")
-        print("  /mek gads now            - Post next guild ad immediately")
+        if MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled() then
+            print("  /mek gads start          - Start guild ad auto-posting")
+            print("  /mek gads stop           - Stop guild ad auto-posting")
+            print("  /mek gads now            - Post next guild ad immediately")
+        end
         print("  /mek inactive kick       - Officer+ (Kick All = GM only)")
         print("  /mek inactive debug")
         print("  /mek inactive whitelist add/remove <n>")
@@ -285,6 +291,10 @@ SlashCmdList["MEKTOWN"]=function(msg)
                 MTR.MPE("Event chain broken at entry " .. tostring(ev.brokenAt or 0) .. " (" .. tostring(ev.reason or "?") .. ")")
             end
         elseif sub == "repair" then
+            if not (MTR.isOfficer or MTR.isGM) then
+                MTR.MPE("Sync repair requests are officer/GM only.")
+                return
+            end
             local domain = (rest or "all"):lower()
             local did = false
             if domain == "all" or domain == "dkp" then
@@ -479,6 +489,10 @@ SlashCmdList["MEKTOWN"]=function(msg)
         if MTR.OpenFindGroup then MTR.OpenFindGroup() end
 
     elseif cmd=="gads" then
+        if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
+            MTR.MPE("Unknown command - /mek help")
+            return
+        end
         local sub = args:lower():match("^%s*(.-)%s*$")
         if not MTR.GuildAds then MTR.MPE("GuildAds module not loaded.") return end
         if sub=="start" or sub=="stop" or sub=="now" then
