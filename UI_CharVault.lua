@@ -935,14 +935,6 @@ local function LedgerSafeText(s)
     return tostring(s or "?"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
 end
 
-local function LedgerCountText(e)
-    local n = tonumber(e and e.count or 0) or 0
-    if e and tostring(e.kind or "") == "money" and MTR.CharVault and MTR.CharVault.FormatGold then
-        return MTR.CharVault.FormatGold(n)
-    end
-    return tostring(n)
-end
-
 -- ============================================================================
 -- TAB: GUILD BANK  (officer-gated icon grid with search)
 -- ============================================================================
@@ -968,8 +960,7 @@ local function BuildGuildBank(t)
         t._mode = t._mode or "Inventory"
         t._query = t._query or ""
         t._category = t._category or "All"
-        t._range = t._range or (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger) and (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger).meta) and ((((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger).meta.uiRange)) or "all")
-        t._ledgerView = t._ledgerView or (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger) and (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger).meta or {}).uiLedgerView)) or "all"
+        t._range = t._range or (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger) and (((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger).meta) and ((((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger).meta.uiRange)) or "1d")
 
         local top = CreateFrame("Frame", nil, t)
         top:SetPoint("TOPLEFT", t, "TOPLEFT", 0, 0)
@@ -1057,9 +1048,11 @@ local function BuildGuildBank(t)
                 info.func = function()
                     if t._mode == "Ledger" then
                         t._range = opt.value
-                        local _gbl=((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} })
+                        local gs = (MTR.GetGuildStore and MTR.GetGuildStore(true)) or MekTownRecruitDB
+                        local _gbl = gs.guildBankLedger or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} }
                         _gbl.meta = _gbl.meta or {}
                         _gbl.meta.uiRange = t._range
+                        gs.guildBankLedger = _gbl
                         MekTownRecruitDB.guildBankLedger = _gbl
                     else
                         t._category = opt.value
@@ -1096,9 +1089,11 @@ local function BuildGuildBank(t)
             b:SetText(opt.text)
             b:SetScript("OnClick", function()
                 t._range = opt.key
-                local _gbl=((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} })
+                local gs = (MTR.GetGuildStore and MTR.GetGuildStore(true)) or MekTownRecruitDB
+                local _gbl = gs.guildBankLedger or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} }
                 _gbl.meta = _gbl.meta or {}
                 _gbl.meta.uiRange = t._range
+                gs.guildBankLedger = _gbl
                 MekTownRecruitDB.guildBankLedger = _gbl
                 UIDropDownMenu_SetSelectedValue(dd, opt.key)
                 UIDropDownMenu_SetText(dd, ({ ["1d"]="Last 24 hours", ["3d"]="Last 3 days", ["7d"]="Last 7 days", ["14d"]="Last 14 days", ["30d"]="Last 30 days", ["all"]="All stored" })[opt.key] or opt.text)
@@ -1107,36 +1102,6 @@ local function BuildGuildBank(t)
             t._quickBtns[#t._quickBtns + 1] = b
             prevBtn = b
         end
-
-        local function SetLedgerView(view)
-            t._ledgerView = view or "all"
-            local _gbl=((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} })
-            _gbl.meta = _gbl.meta or {}
-            _gbl.meta.uiLedgerView = t._ledgerView
-            MekTownRecruitDB.guildBankLedger = _gbl
-            if t._refresh then t._refresh() end
-        end
-
-        local lvAll = CreateFrame("Button", nil, top, "UIPanelButtonTemplate")
-        lvAll:SetSize(44, 20)
-        lvAll:SetPoint("TOPLEFT", top, "TOPLEFT", 4, -72)
-        lvAll:SetText("All")
-        lvAll:SetScript("OnClick", function() SetLedgerView("all") end)
-        t._ledgerViewAllBtn = lvAll
-
-        local lvItems = CreateFrame("Button", nil, top, "UIPanelButtonTemplate")
-        lvItems:SetSize(52, 20)
-        lvItems:SetPoint("LEFT", lvAll, "RIGHT", 3, 0)
-        lvItems:SetText("Items")
-        lvItems:SetScript("OnClick", function() SetLedgerView("items") end)
-        t._ledgerViewItemsBtn = lvItems
-
-        local lvGold = CreateFrame("Button", nil, top, "UIPanelButtonTemplate")
-        lvGold:SetSize(50, 20)
-        lvGold:SetPoint("LEFT", lvItems, "RIGHT", 3, 0)
-        lvGold:SetText("Gold")
-        lvGold:SetScript("OnClick", function() SetLedgerView("gold") end)
-        t._ledgerViewGoldBtn = lvGold
 
         local exportBtn = CreateFrame("Button", nil, top, "UIPanelButtonTemplate")
         SetStdButtonSize(exportBtn, "SM")
@@ -1161,9 +1126,9 @@ local function BuildGuildBank(t)
             scanBtn:SetText("|cffd4af37Scan Now|r")
             scanBtn:SetScript("OnClick", function()
                 if MTR.GuildBankScan and MTR.GuildBankScan.DoScan then
-                    MTR.GuildBankScan.DoScan({ silent = false })
+                    MTR.GuildBankScan.DoScan()
                     if t._infoFS then
-                        t._infoFS:SetText("|cffaaaaaaScanning inventory + ledger using guild-bank transaction APIs (items + money).|r")
+                        t._infoFS:SetText("|cffaaaaaaScanning inventory + ledger... one-time log sweep will temporarily flip bank tabs, then restore your original tab.|r")
                     end
                 end
             end)
@@ -1171,7 +1136,7 @@ local function BuildGuildBank(t)
                 GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
                 GameTooltip:AddLine("Scan Guild Bank + Ledger")
                 GameTooltip:AddLine("|cffaaaaaaRequires the guild bank to already be open.|r", 1, 1, 1)
-                GameTooltip:AddLine("|cffaaaaaaUses transaction APIs (item + money logs), no text-frame scraping.|r", 1, 1, 1)
+                GameTooltip:AddLine("|cffaaaaaaPerforms one controlled log sweep for better in-game timestamp capture, then restores your tab.|r", 1, 1, 1)
                 GameTooltip:Show()
             end)
             scanBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -1197,9 +1162,8 @@ local function BuildGuildBank(t)
         local meta = MTR.GuildBankLedger and MTR.GuildBankLedger.GetMeta and MTR.GuildBankLedger.GetMeta() or {}
 
         if t._mode == "Ledger" then
-            UIDropDownMenu_SetText(t._dd, ({ ["1d"]="Last 24 hours", ["3d"]="Last 3 days", ["7d"]="Last 7 days", ["14d"]="Last 14 days", ["30d"]="Last 30 days", ["all"]="All stored" })[t._range or "all"] or "All stored")
-            local viewLabel = ({ all = "All", items = "Items", gold = "Gold" })[t._ledgerView or "all"] or "All"
-            t._infoFS:SetText(string.format("|cffaaaaaa Ledger: |cffd4af37%d entries|r  |cffaaaaaaview:|r |cffffd700%s|r  |cffaaaaaaretained up to 30 days • search matches actor/item/action/tab/scanner • last sync %s by %s|r", #ledger, viewLabel, meta.lastSyncAt or meta.lastScanAt or "never", meta.lastSyncFrom or meta.lastScanBy or "?"))
+            UIDropDownMenu_SetText(t._dd, ({ ["1d"]="Last 24 hours", ["3d"]="Last 3 days", ["7d"]="Last 7 days", ["14d"]="Last 14 days", ["30d"]="Last 30 days", ["all"]="All stored" })[t._range or "1d"] or "Last 24 hours")
+            t._infoFS:SetText(string.format("|cffaaaaaa Ledger: |cffd4af37%d entries|r  |cffaaaaaaretained up to 30 days • search matches actor/item/action/tab/scanner • last sync %s by %s|r", #ledger, meta.lastSyncAt or meta.lastScanAt or "never", meta.lastSyncFrom or meta.lastScanBy or "?"))
         else
             if t._summaryFS then t._summaryFS:SetText("|cffaaaaaaUse search + category filtering to browse the current guild bank snapshot.|r") end
             UIDropDownMenu_SetText(t._dd, t._category == "All" and "All categories" or (t._category or "All categories"))
@@ -1218,41 +1182,20 @@ local function BuildGuildBank(t)
         PoolHide(c, 1)
 
         if t._mode == "Ledger" then
-            if t._ledgerViewAllBtn then
-                t._ledgerViewAllBtn:Show()
-                t._ledgerViewItemsBtn:Show()
-                t._ledgerViewGoldBtn:Show()
-                t._ledgerViewAllBtn:SetText((t._ledgerView or "all") == "all" and "|cffd4af37All|r" or "All")
-                t._ledgerViewItemsBtn:SetText((t._ledgerView or "all") == "items" and "|cffd4af37Items|r" or "Items")
-                t._ledgerViewGoldBtn:SetText((t._ledgerView or "all") == "gold" and "|cffd4af37Gold|r" or "Gold")
-            end
             local rangeMap = { ["1d"] = 1, ["3d"] = 3, ["7d"] = 7, ["14d"] = 14, ["30d"] = 30, ["all"] = 9999 }
-            local days = rangeMap[t._range or "all"] or 9999
+            local days = rangeMap[t._range or "1d"] or 1
             local cutoff = time() - (days * 86400)
             local rows = {}
-            local view = t._ledgerView or "all"
             for _, e in ipairs((MTR.GuildBankLedger and MTR.GuildBankLedger.GetEntries and MTR.GuildBankLedger.GetEntries()) or ledger) do
                 local eEpoch = LedgerSortEpoch(e)
-                local isMoney = tostring(e.kind or "") == "money"
-                local viewMatch = (view == "all") or (view == "gold" and isMoney) or (view == "items" and not isMoney)
                 local hay = string.lower(table.concat({
                     tostring(e.dateText or ""), tostring(e.actor or ""), tostring(e.txType or ""),
                     tostring(e.itemName or ""), tostring(e.tab1 or ""), tostring(e.tab2 or ""), tostring(e.scanBy or ""), tostring(e.count or "")
                 }, " "))
                 local inRange = (days >= 9999) or (eEpoch > 0 and eEpoch >= cutoff) or (eEpoch <= 0)
-                if viewMatch and inRange and (q == "" or hay:find(q, 1, true)) then
+                if inRange and (q == "" or hay:find(q, 1, true)) then
                     rows[#rows + 1] = e
                 end
-            end
-            if (t._range == "1d") and q == "" and #ledger > 20 and #rows <= 10 and not t._autoRangeWidened then
-                t._autoRangeWidened = true
-                t._range = "all"
-                local _gbl=((MTR.GetGuildStore and MTR.GetGuildStore(true).guildBankLedger) or MekTownRecruitDB.guildBankLedger or { entries = {}, meta = {} })
-                _gbl.meta = _gbl.meta or {}
-                _gbl.meta.uiRange = t._range
-                MekTownRecruitDB.guildBankLedger = _gbl
-                if t._refresh then t._refresh() end
-                return
             end
             table.sort(rows, function(a, b)
                 local ae, be = LedgerSortEpoch(a), LedgerSortEpoch(b)
@@ -1273,7 +1216,7 @@ local function BuildGuildBank(t)
                 local topActor, topCount = "-", 0
                 for actor, n in pairs(actors) do if n > topCount then topActor, topCount = actor, n end end
                 if t._summaryFS then
-                    t._summaryFS:SetText(string.format("|cffaaaaaaView:|r |cffd4af37%d/%d rows|r  |cff55cc55%d deposits|r  |cffff6666%d withdrawals|r  |cffd4af37%d other|r  |cffaaaaaatop actor:|r |cffffd700%s|r", #rows, #ledger, deposits, withdrawals, moved, topActor))
+                    t._summaryFS:SetText(string.format("|cffaaaaaaView:|r |cffd4af37%d rows|r  |cff55cc55%d deposits|r  |cffff6666%d withdrawals|r  |cffd4af37%d other|r  |cffaaaaaatop actor:|r |cffffd700%s|r", #rows, deposits, withdrawals, moved, topActor))
                 end
             end
             if #rows == 0 then
@@ -1282,11 +1225,7 @@ local function BuildGuildBank(t)
                 local fs = FS(row, "_msg", "GameFontHighlight")
                 fs:SetAllPoints(row)
                 fs:SetJustifyH("CENTER")
-                if (t._ledgerView or "all") == "gold" then
-                    fs:SetText("|cffaaaaaaNo gold-ledger entries match the current search/range.|r\n|cff666666If the realm money API is empty, gold rows appear when balance delta is observed during scans.|r")
-                else
-                    fs:SetText("|cffaaaaaaNo ledger entries match the current search/range.|r\n|cff666666Try 3D / 7D, clear search, or run Scan Now.|r")
-                end
+                fs:SetText("|cffaaaaaaNo ledger entries match the current search/range.|r\n|cff666666Try 3D / 7D, clear search, or run Scan Now.|r")
                 c:SetHeight(50)
                 if detail then detail:SetText("|cffaaaaaaNo rows for the current view. Try a wider range, clear search, or run a fresh ledger scan.|r") end
                 return
@@ -1297,10 +1236,10 @@ local function BuildGuildBank(t)
             local h1 = FS(header, "_h1", "GameFontNormalSmall") h1:SetPoint("LEFT", header, "LEFT", 8, 0) h1:SetWidth(120) h1:SetJustifyH("LEFT") h1:SetText("Date")
             local h2 = FS(header, "_h2", "GameFontNormalSmall") h2:SetPoint("LEFT", header, "LEFT", 134, 0) h2:SetWidth(110) h2:SetJustifyH("LEFT") h2:SetText("Player")
             local h3 = FS(header, "_h3", "GameFontNormalSmall") h3:SetPoint("LEFT", header, "LEFT", 248, 0) h3:SetWidth(90) h3:SetJustifyH("LEFT") h3:SetText("Action")
-            local h4 = FS(header, "_h4", "GameFontNormalSmall") h4:SetPoint("LEFT", header, "LEFT", 340, 0) h4:SetWidth(278) h4:SetJustifyH("LEFT") h4:SetText("Item")
-            local h5 = FS(header, "_h5", "GameFontNormalSmall") h5:SetPoint("LEFT", header, "LEFT", 622, 0) h5:SetWidth(120) h5:SetJustifyH("CENTER") h5:SetText("Qty")
-            local h6 = FS(header, "_h6", "GameFontNormalSmall") h6:SetPoint("LEFT", header, "LEFT", 746, 0) h6:SetWidth(94) h6:SetJustifyH("LEFT") h6:SetText("Tab")
-            local h7 = FS(header, "_h7", "GameFontNormalSmall") h7:SetPoint("LEFT", header, "LEFT", 844, 0) h7:SetWidth(40) h7:SetJustifyH("LEFT") h7:SetText("By")
+            local h4 = FS(header, "_h4", "GameFontNormalSmall") h4:SetPoint("LEFT", header, "LEFT", 340, 0) h4:SetWidth(300) h4:SetJustifyH("LEFT") h4:SetText("Item")
+            local h5 = FS(header, "_h5", "GameFontNormalSmall") h5:SetPoint("LEFT", header, "LEFT", 646, 0) h5:SetWidth(55) h5:SetJustifyH("CENTER") h5:SetText("Qty")
+            local h6 = FS(header, "_h6", "GameFontNormalSmall") h6:SetPoint("LEFT", header, "LEFT", 706, 0) h6:SetWidth(120) h6:SetJustifyH("LEFT") h6:SetText("Tab")
+            local h7 = FS(header, "_h7", "GameFontNormalSmall") h7:SetPoint("LEFT", header, "LEFT", 824, 0) h7:SetWidth(60) h7:SetJustifyH("LEFT") h7:SetText("By")
             for i, e in ipairs(rows) do
                 local row = PoolGet(c, i + 1, 890, 24, 24)
                 RowBG(row, i)
@@ -1324,28 +1263,24 @@ local function BuildGuildBank(t)
                 typeFS:SetText(tostring(e.txType or "?"))
                 local itemFS = FS(row, "_item", "GameFontNormalSmall")
                 itemFS:SetPoint("LEFT", row, "LEFT", 340, 0)
-                itemFS:SetWidth(278)
+                itemFS:SetWidth(300)
                 itemFS:SetJustifyH("LEFT")
                 itemFS:SetText((e.itemLink and e.itemLink) or (e.itemName or "?"))
                 local countFS = FS(row, "_count", "GameFontHighlightSmall")
-                countFS:SetPoint("LEFT", row, "LEFT", 622, 0)
-                countFS:SetWidth(120)
+                countFS:SetPoint("LEFT", row, "LEFT", 646, 0)
+                countFS:SetWidth(55)
                 countFS:SetTextColor(0.92, 0.92, 0.92)
                 countFS:SetJustifyH("CENTER")
-                countFS:SetText(LedgerCountText(e))
+                countFS:SetText(e.count or 0)
                 local tabFS = FS(row, "_tab", "GameFontHighlightSmall")
-                tabFS:SetPoint("LEFT", row, "LEFT", 746, 0)
-                tabFS:SetWidth(94)
+                tabFS:SetPoint("LEFT", row, "LEFT", 706, 0)
+                tabFS:SetWidth(120)
                 tabFS:SetTextColor(0.75, 0.75, 0.75)
                 tabFS:SetJustifyH("LEFT")
-                if tostring(e.kind or "") == "money" then
-                    tabFS:SetText("Money")
-                else
-                    tabFS:SetText((e.tab2 and e.tab2 > 0) and ("T" .. e.tab1 .. " → T" .. e.tab2) or ("Tab " .. tostring(e.tab1 or "?")))
-                end
+                tabFS:SetText((e.tab2 and e.tab2 > 0) and ("T" .. e.tab1 .. " → T" .. e.tab2) or ("Tab " .. tostring(e.tab1 or "?")))
                 local byFS = FS(row, "_by", "GameFontHighlightSmall")
-                byFS:SetPoint("LEFT", row, "LEFT", 844, 0)
-                byFS:SetWidth(40)
+                byFS:SetPoint("LEFT", row, "LEFT", 824, 0)
+                byFS:SetWidth(60)
                 byFS:SetTextColor(0.68, 0.68, 0.68)
                 byFS:SetJustifyH("LEFT")
                 byFS:SetText(e.scanBy or "?")
@@ -1355,7 +1290,7 @@ local function BuildGuildBank(t)
                     GameTooltip:AddLine(LedgerSafeText(e.itemName or "?"), 1, 0.82, 0)
                     do local r, g, b = LedgerTypeColor(e.txType) GameTooltip:AddDoubleLine("Action", LedgerSafeText(e.txType or "?"), 0.8, 0.8, 0.8, r, g, b) end
                     GameTooltip:AddDoubleLine("Player", LedgerSafeText(e.actor or "?"), 0.8, 0.8, 0.8, 1, 1, 1)
-                    GameTooltip:AddDoubleLine("Quantity", LedgerCountText(e), 0.8, 0.8, 0.8, 1, 1, 1)
+                    GameTooltip:AddDoubleLine("Quantity", tostring(e.count or 0), 0.8, 0.8, 0.8, 1, 1, 1)
                     GameTooltip:AddDoubleLine("Tab", LedgerSafeText(((e.tab2 and e.tab2 > 0) and ("T" .. e.tab1 .. " -> T" .. e.tab2) or ("Tab " .. tostring(e.tab1 or "?")))), 0.8, 0.8, 0.8, 1, 1, 1)
                     GameTooltip:AddDoubleLine("Shown as", LedgerDisplayDate(e), 0.8, 0.8, 0.8, 1, 0.96, 0.88)
                     if tonumber(e.epoch) and tonumber(e.epoch) > 0 then
@@ -1367,7 +1302,7 @@ local function BuildGuildBank(t)
                     end
                     GameTooltip:Show()
                     if detail then
-                        detail:SetText(string.format("|cffd4af37%s|r  |cffaaaaaa%s by|r %s  |cffaaaaaaqty|r %s  |cffaaaaaatab|r %s  |cffaaaaaashown as|r %s", LedgerSafeText(e.itemName or "?"), LedgerSafeText(e.txType or "?"), LedgerSafeText(e.actor or "?"), LedgerCountText(e), LedgerSafeText(((e.tab2 and e.tab2 > 0) and ("T" .. e.tab1 .. " -> T" .. e.tab2) or ("Tab " .. tostring(e.tab1 or "?")))), LedgerDisplayDate(e)))
+                        detail:SetText(string.format("|cffd4af37%s|r  |cffaaaaaa%s by|r %s  |cffaaaaaaqty|r %s  |cffaaaaaatab|r %s  |cffaaaaaashown as|r %s", LedgerSafeText(e.itemName or "?"), LedgerSafeText(e.txType or "?"), LedgerSafeText(e.actor or "?"), tostring(e.count or 0), LedgerSafeText(((e.tab2 and e.tab2 > 0) and ("T" .. e.tab1 .. " -> T" .. e.tab2) or ("Tab " .. tostring(e.tab1 or "?")))), LedgerDisplayDate(e)))
                     end
                 end)
                 row:SetScript("OnLeave", function(self)
@@ -1382,11 +1317,6 @@ local function BuildGuildBank(t)
         end
 
         local matches = {}
-        if t._ledgerViewAllBtn then
-            t._ledgerViewAllBtn:Hide()
-            t._ledgerViewItemsBtn:Hide()
-            t._ledgerViewGoldBtn:Hide()
-        end
         local category = t._category or "All"
         for _, e in ipairs(bank) do
             local nameMatch = (q == "") or (e.name and string.lower(e.name):find(q, 1, true))
@@ -1547,9 +1477,7 @@ function MTR.OpenCharVault()
         vaultWin=CreateFrame("Frame","MekTownVaultWindow",UIParent)
         vaultWin:SetSize(VAULT_W,VAULT_H)
         vaultWin:SetPoint("CENTER")
-        vaultWin:SetFrameStrata("HIGH")
-        vaultWin:SetToplevel(true)
-        if vaultWin.SetClampedToScreen then vaultWin:SetClampedToScreen(true) end
+        vaultWin:SetFrameStrata("MEDIUM")
         if vaultWin.SetClipsChildren then vaultWin:SetClipsChildren(true) end
         vaultWin:SetBackdrop({
             bgFile="",
@@ -1569,11 +1497,6 @@ function MTR.OpenCharVault()
         vaultWin:RegisterForDrag("LeftButton")
         vaultWin:SetScript("OnDragStart",vaultWin.StartMoving)
         vaultWin:SetScript("OnDragStop", vaultWin.StopMovingOrSizing)
-        vaultWin:SetScript("OnShow", function(self)
-            self:SetFrameStrata("HIGH")
-            self:SetToplevel(true)
-            if self.Raise then self:Raise() end
-        end)
         vaultWin:Hide()
 
         local xBtn=CreateFrame("Button",nil,vaultWin,"UIPanelCloseButton")
@@ -1606,7 +1529,7 @@ function MTR.OpenCharVault()
         vTitleEdge:SetPoint("TOPRIGHT", vaultWin, "TOPRIGHT", -9, -26)
         local hdr=vaultWin:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
         hdr:SetPoint("TOPLEFT",vaultWin,"TOPLEFT",12,-7)
-        hdr:SetText("|cffff2020MekTown|r  |cffd4af37\226\152\133 Vault|r  |cffaaaaaa v"..(MTR.VERSION or "2.1.1-pre").."|r")
+        hdr:SetText("|cffff2020MekTown|r  |cffd4af37\226\152\133 Vault|r  |cffaaaaaa v"..(MTR.VERSION or "2.1.1").."|r")
 
         local sub=vaultWin:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
         sub:SetPoint("TOPLEFT",vaultWin,"TOPLEFT",10,-32)
@@ -1682,13 +1605,6 @@ function MTR.OpenCharVault()
         end)
         _tabFrames["Guild Bank"]:SetScript("OnShow",  function(s)
             if s._refresh then s._refresh() end
-            local now = time()
-            if (tonumber(s._lastAutoScanAt) or 0) + 6 <= now then
-                s._lastAutoScanAt = now
-                if MTR.GuildBankScan and MTR.GuildBankScan.DoScan then
-                    MTR.GuildBankScan.DoScan({ silent = true })
-                end
-            end
         end)
 
         _tabBuilders["Overview"]    = BuildOverview

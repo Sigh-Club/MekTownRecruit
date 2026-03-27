@@ -283,7 +283,7 @@ bidChatFrame:SetScript("OnEvent", function(self, event, message, sender)
 
     -- Auction bid capture
     if MTR.activeBid then
-        local amount
+        local amount = nil
 
         if event == "CHAT_MSG_WHISPER" then
             -- Whisper: plain number only e.g. "500"

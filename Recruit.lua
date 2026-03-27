@@ -228,7 +228,6 @@ rhInit:RegisterEvent("PLAYER_LOGIN")
 rhInit:SetScript("OnEvent", function()
     MTR.After(12, function()
         if not IsInGuild() then return end
-        if not (MTR.isOfficer or MTR.isGM) then return end
         local st = RHState()
         RHSend("RH:REQ:" .. RHSanitize(MTR.playerName or "?") .. ":" .. tostring(st.hash or "0"))
     end)
@@ -566,8 +565,8 @@ scanFrame:SetScript("OnEvent", function(self, event, message, sender)
     -- Additional required words filter
     if MTR.db.additionalRequired ~= "" then
         local found = false
-        for word in MTR.db.additionalRequired:gmatch("[^,]+") do
-            word = word:match("^%s*(.-)%s*$"):lower()
+        for w in MTR.db.additionalRequired:gmatch("[^,]+") do
+            local word = w:match("^%s*(.-)%s*$"):lower()
             if word ~= "" and lower:find(word, 1, true) then found = true break end
         end
         if not found then return end

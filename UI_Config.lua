@@ -123,9 +123,7 @@ local function CreateMainWindow()
     mainWin = CreateFrame("Frame", "MekTownMainWindow", UIParent)
     mainWin:SetSize(920, 680)
     mainWin:SetPoint("CENTER")
-    mainWin:SetFrameStrata("HIGH")
-    mainWin:SetToplevel(true)
-    if mainWin.SetClampedToScreen then mainWin:SetClampedToScreen(true) end
+    mainWin:SetFrameStrata("MEDIUM")
     if mainWin.SetClipsChildren then mainWin:SetClipsChildren(true) end
     -- Window border only (no bgFile so our textures show through)
     mainWin:SetBackdrop({
@@ -156,16 +154,10 @@ local function CreateMainWindow()
     mainWin:EnableMouse(true)
     mainWin:SetMovable(true)
     mainWin:SetResizable(true)
-    mainWin:SetMinResize(920, 680)
-    if mainWin.SetMaxResize then mainWin:SetMaxResize(1280, 900) end
+    mainWin:SetMinResize(700, 500)
     mainWin:RegisterForDrag("LeftButton")
     mainWin:SetScript("OnDragStart", mainWin.StartMoving)
     mainWin:SetScript("OnDragStop",  mainWin.StopMovingOrSizing)
-    mainWin:SetScript("OnShow", function(self)
-        self:SetFrameStrata("HIGH")
-        self:SetToplevel(true)
-        if self.Raise then self:Raise() end
-    end)
     mainWin:Hide()
 
     -- Resize grip (bottom-right corner)
@@ -176,10 +168,7 @@ local function CreateMainWindow()
     resizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     resizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     resizeGrip:SetScript("OnMouseDown", function() mainWin:StartSizing("BOTTOMRIGHT") end)
-    resizeGrip:SetScript("OnMouseUp",   function()
-        mainWin:StopMovingOrSizing()
-        if mainWin.Raise then mainWin:Raise() end
-    end)
+    resizeGrip:SetScript("OnMouseUp",   function() mainWin:StopMovingOrSizing() end)
 
     -- ---- TITLE BAR: UI-DialogBox-Header tinted blood-red for Orky look ----
     -- This texture is a natural parchment-banner shape built into WoW 3.3.5
@@ -202,7 +191,7 @@ local function CreateMainWindow()
     -- Title text (left-anchored inside title bar)
     local titleText = mainWin:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     titleText:SetPoint("TOPLEFT", mainWin, "TOPLEFT", 10, -6)
-    titleText:SetText("|cffff2020MekTown|r |cffd4af37Recruit Control|r |cffaaaaaa v"..(MTR.VERSION or "2.1.1-pre").."|r")
+    titleText:SetText("|cffff2020MekTown|r |cffd4af37Recruit Control|r |cffaaaaaa v"..(MTR.VERSION or "2.1.1").."|r")
 
     -- Close button (standard WoW X, top-right)
     local closeBtn = CreateFrame("Button", nil, mainWin, "UIPanelCloseButton")
@@ -221,7 +210,7 @@ local function CreateMainWindow()
     -- WORKSPACE & TAB SYSTEM
     -- =========================================================================
     local WORKSPACES = {
-        { name = "Utility", color = "|cff00ccff", tabs = {"Vault", "Radar", "Standings", "Roll", "Profile"} },
+        { name = "Utility", color = "|cff00ccff", tabs = {"Vault", "Radar", "Standings", "Roll"} },
         { name = "Guild",   color = "|cffff2020", tabs = {"Recruit", "Ads", "DKP", "Auction", "Inactive", "Guild"} },
         { name = "Admin",   color = "|cffd4af37", tabs = {"Profile", "Access"} },
     }
@@ -279,13 +268,6 @@ local function CreateMainWindow()
         return HasGuildAccess()
     end
 
-    local function IsTabAllowed(tabDisplayName)
-        if tabDisplayName == "Ads" then
-            return (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) or false
-        end
-        return true
-    end
-
     -- Function to show specific workspace
     local function ShowWS(wsName, preferredTab)
         if not IsWorkspaceAllowed(wsName) then
@@ -307,7 +289,7 @@ local function CreateMainWindow()
         for _, b in ipairs(tabBtns) do
             local show = false
             for _, t in ipairs(ws.tabs) do
-                if b._tabDisplayName == t and IsTabAllowed(t) then
+                if b._tabDisplayName == t then
                     show = true
                     break
                 end
@@ -497,7 +479,7 @@ local function CreateMainWindow()
         scroll:SetPoint("TOPLEFT", t, "TOPLEFT", 6, -6)
         scroll:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -28, 8)
         local content = CreateFrame("Frame", nil, scroll)
-        content:SetWidth(820) content:SetHeight(520)
+        content:SetWidth(820) content:SetHeight(400)
         scroll:SetScrollChild(content)
 
         local hdr = content:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
@@ -535,23 +517,6 @@ local function CreateMainWindow()
         noteLbl:SetPoint("TOPLEFT",pLabel,"BOTTOMLEFT",0,-32)
         noteLbl:SetWidth(600) noteLbl:SetWordWrap(true) noteLbl:SetJustifyH("LEFT")
         noteLbl:SetText("|cffd4af37Tip:|r Deleting the Default profile is not allowed. Create a new profile first, then switch to it before deleting others.")
-
-        local autoHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        autoHdr:SetPoint("TOPLEFT", noteLbl, "BOTTOMLEFT", 0, -26)
-        autoHdr:SetText("|cffd4af37Auto-Close Windows|r")
-
-        local autoDesc = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        autoDesc:SetPoint("TOPLEFT", autoHdr, "BOTTOMLEFT", 0, -6)
-        autoDesc:SetWidth(760)
-        autoDesc:SetWordWrap(true)
-        autoDesc:SetJustifyH("LEFT")
-        autoDesc:SetText("|cffaaaaaaOptional quality-of-life safety for raids and combat: automatically hide addon windows in combat and/or when entering instance content.|r")
-
-        mainWin._ckAutoCloseCombat = MakeCK("UiAutoCloseCombat", content, "Close addon windows when entering combat", 10, -186)
-        mainWin._ckAutoCloseCombat:SetScript("OnClick", function(s) SaveBool("uiAutoCloseOnCombat", s:GetChecked()) end)
-
-        mainWin._ckAutoCloseInstance = MakeCK("UiAutoCloseInstance", content, "Close addon windows when entering instances (party/raid/pvp/arena)", 10, -214)
-        mainWin._ckAutoCloseInstance:SetScript("OnClick", function(s) SaveBool("uiAutoCloseOnInstance", s:GetChecked()) end)
 
         local function RebuildPDD()
             if not MekTownRecruitDB or not MekTownRecruitDB.profiles then return end
@@ -1083,33 +1048,6 @@ local function CreateMainWindow()
         guildFmtHint:SetText("|cff9a9a9aFormat: Invite Keywords = one per line. Auto-Responses = trigger|response per line. MOTD Templates = key=value per line.|r")
         y = y - 30
 
-        MakeSep(content, "Quick Open", y)
-        y = y - 18
-        local openTreeBtn = MakeBTStd(content, "Open Guild Tree", "MD")
-        openTreeBtn:SetPoint("TOPLEFT", content, "TOPLEFT", FIELD_X, y)
-        openTreeBtn:SetScript("OnClick", function()
-            if mainWin and mainWin.Hide then mainWin:Hide() end
-            if MTR.OpenCharVaultToTab then
-                MTR.OpenCharVaultToTab("Guild Tree")
-            elseif MTR.OpenCharVault then
-                MTR.OpenCharVault()
-                if MTR.vaultWin and MTR.vaultWin._showTab then MTR.vaultWin._showTab("Guild Tree") end
-            end
-        end)
-
-        local openBankBtn = MakeBTStd(content, "Open Guild Bank", "MD")
-        openBankBtn:SetPoint("LEFT", openTreeBtn, "RIGHT", 8, 0)
-        openBankBtn:SetScript("OnClick", function()
-            if mainWin and mainWin.Hide then mainWin:Hide() end
-            if MTR.OpenCharVaultToTab then
-                MTR.OpenCharVaultToTab("Guild Bank")
-            elseif MTR.OpenCharVault then
-                MTR.OpenCharVault()
-                if MTR.vaultWin and MTR.vaultWin._showTab then MTR.vaultWin._showTab("Guild Bank") end
-            end
-        end)
-        y = y - 42
-
         local inviteHdr = content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
         inviteHdr:SetPoint("TOPLEFT", content, "TOPLEFT", LEFT, y)
         inviteHdr:SetWidth(PANEL_W)
@@ -1293,25 +1231,36 @@ local function CreateMainWindow()
     -- =========================================================================
     tabBuilders["DKP"] = function(t)
         if t.SetClipsChildren then t:SetClipsChildren(true) end
-        PlaceHelpText(t, 330, -6, 540, "Writes are officer/GM-only. Raid and bulk awards apply only to current guild members; non-guild players are skipped.")
 
-        mainWin._ckDKPEnable = MakeCK("DKPEn",t,"Enable DKP system",0,-4)
+        local scroll = CreateFrame("ScrollFrame", nil, t, "UIPanelScrollFrameTemplate")
+        scroll:SetPoint("TOPLEFT", t, "TOPLEFT", 6, -6)
+        scroll:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -28, 8)
+
+        local content = CreateFrame("Frame", nil, scroll)
+        content:SetWidth(880)
+        content:SetHeight(700)
+        if content.SetClipsChildren then content:SetClipsChildren(true) end
+        scroll:SetScrollChild(content)
+
+        PlaceHelpText(content, 330, -6, 540, "Writes are officer/GM-only. Raid and bulk awards apply only to current guild members; non-guild players are skipped.")
+
+        mainWin._ckDKPEnable = MakeCK("DKPEn",content,"Enable DKP system",0,-4)
         if Settings then Settings.BindCheck(mainWin, mainWin._ckDKPEnable, "dkpEnabled") end
         mainWin._ckDKPEnable:SetScript("OnClick",function(s) SaveBool("dkpEnabled", s:GetChecked()) end)
 
-        local l1=t:CreateFontString(nil,"OVERLAY","GameFontNormal") l1:SetPoint("TOPLEFT",t,"TOPLEFT",0,-38) l1:SetText("DKP per raid attendance:")
-        mainWin._slDKPRaid = MakeSL("DKPRaid",t,300,0,-54,0,200,5)
+        local l1=content:CreateFontString(nil,"OVERLAY","GameFontNormal") l1:SetPoint("TOPLEFT",content,"TOPLEFT",0,-32) l1:SetText("DKP per raid attendance:")
+        mainWin._slDKPRaid = MakeSL("DKPRaid",content,300,0,-48,0,200,5)
         if Settings then Settings.BindSlider(mainWin, mainWin._slDKPRaid, "dkpPerRaid", {default=10, step=5}) end
         mainWin._slDKPRaid:SetScript("OnValueChanged",function(s,v) _G["MekSLv_DKPRaidText"]:SetText(v) SaveValue("dkpPerRaid", math.floor(v)) end)
 
-        local l2=t:CreateFontString(nil,"OVERLAY","GameFontNormal") l2:SetPoint("TOPLEFT",t,"TOPLEFT",0,-86) l2:SetText("DKP per boss kill:")
-        mainWin._slDKPBoss = MakeSL("DKPBoss",t,300,0,-102,0,100,1)
+        local l2=content:CreateFontString(nil,"OVERLAY","GameFontNormal") l2:SetPoint("TOPLEFT",content,"TOPLEFT",0,-74) l2:SetText("DKP per boss kill:")
+        mainWin._slDKPBoss = MakeSL("DKPBoss",content,300,0,-90,0,100,1)
         if Settings then Settings.BindSlider(mainWin, mainWin._slDKPBoss, "dkpPerBoss", {default=5, step=1}) end
         mainWin._slDKPBoss:SetScript("OnValueChanged",function(s,v) _G["MekSLv_DKPBossText"]:SetText(v) SaveValue("dkpPerBoss", math.floor(v)) end)
 
-        local l3=t:CreateFontString(nil,"OVERLAY","GameFontNormal") l3:SetPoint("TOPLEFT",t,"TOPLEFT",0,-134) l3:SetText("Default publish channel:")
-        local chanDD=CreateFrame("Frame","MekDKPChanDDv",t,"UIDropDownMenuTemplate")
-        chanDD:SetPoint("TOPLEFT",t,"TOPLEFT",-4,-148) UIDropDownMenu_SetWidth(chanDD,130)
+        local l3=content:CreateFontString(nil,"OVERLAY","GameFontNormal") l3:SetPoint("TOPLEFT",content,"TOPLEFT",0,-116) l3:SetText("Default publish channel:")
+        local chanDD=CreateFrame("Frame","MekDKPChanDDv",content,"UIDropDownMenuTemplate")
+        chanDD:SetPoint("TOPLEFT",content,"TOPLEFT",-4,-130) UIDropDownMenu_SetWidth(chanDD,130)
         mainWin._dkpChanDD=chanDD
         if Settings then
             Settings.BindCustom(mainWin, function()
@@ -1332,29 +1281,29 @@ local function CreateMainWindow()
             end
         end)
 
-        mainWin._ckAttAuto = MakeCK("AttAuto",t,"Auto-snapshot attendance on raid zone entry",0,-182)
+        mainWin._ckAttAuto = MakeCK("AttAuto",content,"Auto-snapshot attendance on raid zone entry",0,-158)
         if Settings then Settings.BindCheck(mainWin, mainWin._ckAttAuto, "attendanceAutoSnapshot") end
         mainWin._ckAttAuto:SetScript("OnClick",function(s) SaveBool("attendanceAutoSnapshot", s:GetChecked()) end)
 
-        MakeSep(t,"Actions",-212)
-        PlaceHelpText(t, 626, -198, 240, "Sync sends balances and history to guild addon peers. Publish sends standings to the selected channel.")
-        local syncBtn = MakeBTStd(t,"Sync DKP to Raid","LG") syncBtn:SetPoint("TOP",t,"TOP",-74,-228)
+        MakeSep(content,"Actions",-182)
+        PlaceHelpText(content, 626, -168, 240, "Sync sends balances and history to guild addon peers. Publish sends standings to the selected channel.")
+        local syncBtn = MakeBTStd(content,"Sync DKP to Raid","LG") syncBtn:SetPoint("TOP",content,"TOP",-74,-192)
         syncBtn:SetScript("OnClick",function() MTR.DKPSyncToRaid() end)
-        local pubBtn = MakeBTStd(t,"Publish Standings","LG") pubBtn:SetPoint("LEFT",syncBtn,"RIGHT",8,0)
+        local pubBtn = MakeBTStd(content,"Publish Standings","LG") pubBtn:SetPoint("LEFT",syncBtn,"RIGHT",8,0)
         pubBtn:SetScript("OnClick",function() if CfgDB() then MTR.DKPPublish(CfgDB().dkpPublishChannel) end end)
 
-        MakeSep(t,"Officer Actions",-270)
-        local actLbl=t:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-        actLbl:SetPoint("TOP",t,"TOP",0,-288)
+        MakeSep(content,"Officer Actions",-228)
+        local actLbl=content:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
+        actLbl:SetPoint("TOP",content,"TOP",0,-244)
         actLbl:SetText("|cffaaaaaaMembers can only view their own history. Officers and above can manage and review all DKP entries.|r")
 
-        local dl1=t:CreateFontString(nil,"OVERLAY","GameFontNormal") dl1:SetPoint("TOPLEFT",t,"TOPLEFT",120,-316) dl1:SetText("Player:")
-        mainWin._ledgPlayerEB = MakeIn("LPly",t,160,170,-312)
-        local dl2=t:CreateFontString(nil,"OVERLAY","GameFontNormal") dl2:SetPoint("TOPLEFT",t,"TOPLEFT",352,-316) dl2:SetText("Pts:")
-        mainWin._ledgAmtEB = MakeIn("LAmt",t,70,380,-312)
-        local dl3=t:CreateFontString(nil,"OVERLAY","GameFontNormal") dl3:SetPoint("TOPLEFT",t,"TOPLEFT",470,-316) dl3:SetText("Reason:")
-        mainWin._ledgReasonEB = MakeIn("LRsn",t,220,530,-312)
-        local awdBtn=MakeBTStd(t,"Award","MD") awdBtn:SetPoint("TOPLEFT",t,"TOPLEFT",170,-346)
+        local dl1=content:CreateFontString(nil,"OVERLAY","GameFontNormal") dl1:SetPoint("TOPLEFT",content,"TOPLEFT",120,-266) dl1:SetText("Player:")
+        mainWin._ledgPlayerEB = MakeIn("LPly",content,160,170,-262)
+        local dl2=content:CreateFontString(nil,"OVERLAY","GameFontNormal") dl2:SetPoint("TOPLEFT",content,"TOPLEFT",352,-266) dl2:SetText("Pts:")
+        mainWin._ledgAmtEB = MakeIn("LAmt",content,70,380,-262)
+        local dl3=content:CreateFontString(nil,"OVERLAY","GameFontNormal") dl3:SetPoint("TOPLEFT",content,"TOPLEFT",470,-266) dl3:SetText("Reason:")
+        mainWin._ledgReasonEB = MakeIn("LRsn",content,220,530,-262)
+        local awdBtn=MakeBTStd(content,"Award","MD") awdBtn:SetPoint("TOPLEFT",content,"TOPLEFT",170,-290)
         awdBtn:SetScript("OnClick",function()
             local n=(mainWin._ledgPlayerEB:GetText() or ""):match("^%s*(.-)%s*$")
             local a=tonumber(mainWin._ledgAmtEB:GetText() or "")
@@ -1363,7 +1312,7 @@ local function CreateMainWindow()
             MTR.DKPAdd(n,a,r~="" and r or "Officer award",MTR.playerName)
             MP("Awarded "..a.." to "..n..". Balance: "..MTR.DKPBalance(n))
         end)
-        local dedBtn=MakeBTStd(t,"Deduct","MD") dedBtn:SetPoint("LEFT",awdBtn,"RIGHT",8,0)
+        local dedBtn=MakeBTStd(content,"Deduct","MD") dedBtn:SetPoint("LEFT",awdBtn,"RIGHT",8,0)
         dedBtn:SetScript("OnClick",function()
             local n=(mainWin._ledgPlayerEB:GetText() or ""):match("^%s*(.-)%s*$")
             local a=tonumber(mainWin._ledgAmtEB:GetText() or "")
@@ -1372,7 +1321,7 @@ local function CreateMainWindow()
             MTR.DKPAdd(n,-a,r~="" and r or "Officer deduction",MTR.playerName)
             MP("Deducted "..a.." from "..n..". Balance: "..MTR.DKPBalance(n))
         end)
-        local setBtn=MakeBTStd(t,"Set Balance (GM)","LG") setBtn:SetPoint("LEFT",dedBtn,"RIGHT",8,0)
+        local setBtn=MakeBTStd(content,"Set Balance (GM)","LG") setBtn:SetPoint("LEFT",dedBtn,"RIGHT",8,0)
         setBtn:SetScript("OnClick",function()
             if not MTR.isGM then MPE("GM only.") return end
             local n=(mainWin._ledgPlayerEB:GetText() or ""):match("^%s*(.-)%s*$")
@@ -1381,13 +1330,13 @@ local function CreateMainWindow()
             MTR.DKPSet(n,a,MTR.playerName) MP("Set "..n.."'s balance to "..a.." pts.")
         end)
 
-        MakeSep(t,"Bulk Award",-388)
-        PlaceHelpText(t, 0, -402, 210, "Applies only to current guild members in your party/raid roster.")
-        local l4=t:CreateFontString(nil,"OVERLAY","GameFontNormal") l4:SetPoint("TOPLEFT",t,"TOPLEFT",220,-404) l4:SetText("Pts:")
-        mainWin._bulkAmtEB = MakeIn("BAmt",t,70,252,-400)
-        local l5=t:CreateFontString(nil,"OVERLAY","GameFontNormal") l5:SetPoint("TOPLEFT",t,"TOPLEFT",334,-404) l5:SetText("Reason:")
-        mainWin._bulkReasonEB = MakeIn("BRsn",t,260,384,-400)
-        local bkRaid=MakeBTStd(t,"Award Full Raid","LG") bkRaid:SetPoint("LEFT",mainWin._bulkReasonEB,"RIGHT",10,0)
+        MakeSep(content,"Bulk Award",-328)
+        PlaceHelpText(content, 0, -342, 210, "Applies only to current guild members in your party/raid roster.")
+        local l4=content:CreateFontString(nil,"OVERLAY","GameFontNormal") l4:SetPoint("TOPLEFT",content,"TOPLEFT",220,-344) l4:SetText("Pts:")
+        mainWin._bulkAmtEB = MakeIn("BAmt",content,70,252,-340)
+        local l5=content:CreateFontString(nil,"OVERLAY","GameFontNormal") l5:SetPoint("TOPLEFT",content,"TOPLEFT",334,-344) l5:SetText("Reason:")
+        mainWin._bulkReasonEB = MakeIn("BRsn",content,260,384,-340)
+        local bkRaid=MakeBTStd(content,"Award Full Raid","LG") bkRaid:SetPoint("LEFT",mainWin._bulkReasonEB,"RIGHT",10,0)
         bkRaid:SetScript("OnClick",function()
             local a=tonumber(mainWin._bulkAmtEB:GetText() or "")
             if not a or a==0 then MPE("Enter an amount.") return end
@@ -1395,11 +1344,11 @@ local function CreateMainWindow()
             MTR.DKPBulkAward(MTR.DKPGetRaidMembers(),a,r~="" and r or "Raid attendance award")
         end)
 
-        MakeSep(t,"History",-442)
-        local lh=t:CreateFontString(nil,"OVERLAY","GameFontNormal") lh:SetPoint("TOPLEFT",t,"TOPLEFT",200,-458) lh:SetText("Player name:")
-        mainWin._ledgLookupEB = MakeIn("LLkp",t,180,282,-454)
-        local lkBtn=MakeBTStd(t,"View","SM") lkBtn:SetPoint("LEFT",mainWin._ledgLookupEB,"RIGHT",6,0)
-        local _,lkDisplay = MakeRO(t,520,205,180,-486)
+        MakeSep(content,"History",-376)
+        local lh=content:CreateFontString(nil,"OVERLAY","GameFontNormal") lh:SetPoint("TOPLEFT",content,"TOPLEFT",200,-392) lh:SetText("Player name:")
+        mainWin._ledgLookupEB = MakeIn("LLkp",content,180,282,-388)
+        local lkBtn=MakeBTStd(content,"View","SM") lkBtn:SetPoint("LEFT",mainWin._ledgLookupEB,"RIGHT",6,0)
+        local _,lkDisplay = MakeRO(content,520,205,180,-420)
         lkBtn:SetScript("OnClick",function()
             local n=(mainWin._ledgLookupEB:GetText() or ""):match("^%s*(.-)%s*$")
             if n=="" then return end
@@ -2166,8 +2115,6 @@ local function CreateMainWindow()
         local ck_rcMini = _G["MekCK_RcMinimap"] if ck_rcMini then ck_rcMini:SetChecked(cfg.minimapButton ~= false) end
         local ck_rcDbg = _G["MekCK_RcDebug"]   if ck_rcDbg  then ck_rcDbg:SetChecked(cfg.enableDebug == true) end
         local ck_rcIgn = _G["MekCK_RcIgnAds"]  if ck_rcIgn  then ck_rcIgn:SetChecked(cfg.ignoreAds ~= false) end
-        if mainWin._ckAutoCloseCombat then mainWin._ckAutoCloseCombat:SetChecked(cfg.uiAutoCloseOnCombat == true) end
-        if mainWin._ckAutoCloseInstance then mainWin._ckAutoCloseInstance:SetChecked(cfg.uiAutoCloseOnInstance == true) end
         local eb_addReq = _G["MekIn_AddReq"]    if eb_addReq then eb_addReq:SetText(cfg.additionalRequired or "") end
         if mainWin._slIgnore then mainWin._slIgnore:SetValue(cfg.ignoreDuration or 300) end
 
@@ -2203,7 +2150,9 @@ local function CreateMainWindow()
 
         -- Guild Utils / Standings ─────────────────────────────────────────────
         if mainWin._refreshGuildTab then mainWin._refreshGuildTab() end
-        -- Note: Standings usually auto-refreshes OnShow, but we guard it here
+        if mainWin._standRows and mainWin._standContent then
+            -- Note: Standings usually auto-refreshes OnShow, but we guard it here
+        end
 
         -- DKP tab ──────────────────────────────────────────────────────
         local ck_dkpEn = _G["MekCK_DKPEn"]   if ck_dkpEn   then ck_dkpEn:SetChecked(cfg.dkpEnabled ~= false) end

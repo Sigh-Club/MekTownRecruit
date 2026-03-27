@@ -1,17 +1,21 @@
 -- ============================================================================
--- Commands.lua  v5.0
+-- Commands.lua  v5.1
 -- PLAYER_LOGIN initialisation + all slash commands
 -- This loads LAST, so every function it calls is already defined.
 -- ============================================================================
 local MTR = MekTownRecruit
 
 -- ============================================================================
--- PLAYER_LOGIN
+-- PLAYER_LOGIN / PLAYER_ENTERING_WORLD (handles /reload)
 -- ============================================================================
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
+initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 initFrame:SetScript("OnEvent",function(self,event)
-    if event ~= "PLAYER_LOGIN" then return end
+    if event == "PLAYER_ENTERING_WORLD" and MTR.initialized then return end
+    if event == "PLAYER_LOGIN" and MTR.initialized then return end
+
+    if event == "PLAYER_ENTERING_WORLD" and not MTR.initialized then event = "PLAYER_LOGIN" end
 
     MTR.InitDB()
     MTR.playerName    = UnitName("player")
@@ -34,27 +38,23 @@ initFrame:SetScript("OnEvent",function(self,event)
         if MTR.EnsureGuildIdentity then
             MTR.EnsureGuildIdentity()
         end
-        if MTR.ApplyGuildPresetIfNeeded then
-            MTR.ApplyGuildPresetIfNeeded()
-        end
 
         -- Always enable offline member visibility for the whole session.
         SetGuildRosterShowOffline(true)
         GuildRoster()
 
         -- Restore GuildAds auto-posting if it was active last session
-        if MTR.GuildAds and (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then MTR.GuildAds.RestoreState() end
+        if MTR.GuildAds then MTR.GuildAds.RestoreState() end
 
         -- Login sync:
         --   • Officers broadcast their current balances/history snapshot
         --   • Everyone requests the latest verified snapshot so fresh logins
         --     converge even if they were offline during the last award wave.
         MTR.After(8, function()
-            local canSyncPing = (MTR.isOfficer or MTR.isGM)
-            if canSyncPing and IsInGuild() and MTR.DKPRequestFullSync then
+            if IsInGuild() and MTR.DKPRequestFullSync then
                 MTR.DKPRequestFullSync()
             end
-            if canSyncPing and IsInGuild() then
+            if IsInGuild() then
                 local gbHash = "0"
                 if MTR.GetSyncAuditStatus then
                     local ss = MTR.GetSyncAuditStatus()
@@ -66,10 +66,10 @@ initFrame:SetScript("OnEvent",function(self,event)
                     SendAddonMessage("MekTownGB", "GB:REQ:" .. tostring(MTR.playerName or "?") .. ":" .. tostring(gbHash), "GUILD")
                 end
             end
-            if canSyncPing and IsInGuild() and MTR.GuildBankLedger and MTR.GuildBankLedger.RequestSync then
+            if IsInGuild() and MTR.GuildBankLedger and MTR.GuildBankLedger.RequestSync then
                 MTR.GuildBankLedger.RequestSync()
             end
-            if canSyncPing and IsInGuild() then
+            if MTR.isOfficer and IsInGuild() then
                 MTR.DKPSyncToRaidSafe()
             end
         end)
@@ -82,7 +82,7 @@ initFrame:SetScript("OnEvent",function(self,event)
         end
     end)
 
-    print("|cff00c0ff[MekTown Recruit]|r v"..tostring(MTR.VERSION or "2.1.1-pre").." Ready — profile |cffffff00"..
+    print("|cff00c0ff[MekTown Recruit]|r v"..tostring(MTR.VERSION or "2.1.1").." Ready — profile |cffffff00"..
         MekTownRecruitDB.activeProfile.."|r  |cffaaaaaa("..
         #MTR.db.keywords.." recruit keywords · "..
         #MTR.db.whisperTemplates.." whisper templates · /mek help)|r")
@@ -134,11 +134,9 @@ SlashCmdList["MEKTOWN"]=function(msg)
         print("  /mek chars               - Open Character Vault (all alts)")
   print("  /mek radar               - Open GroupRadar group finder")
         print("  /mek lfg                 - Open Find Group / post LFG")
-        if MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled() then
-            print("  /mek gads start          - Start guild ad auto-posting")
-            print("  /mek gads stop           - Stop guild ad auto-posting")
-            print("  /mek gads now            - Post next guild ad immediately")
-        end
+        print("  /mek gads start          - Start guild ad auto-posting")
+        print("  /mek gads stop           - Stop guild ad auto-posting")
+        print("  /mek gads now            - Post next guild ad immediately")
         print("  /mek inactive kick       - Officer+ (Kick All = GM only)")
         print("  /mek inactive debug")
         print("  /mek inactive whitelist add/remove <n>")
@@ -291,10 +289,6 @@ SlashCmdList["MEKTOWN"]=function(msg)
                 MTR.MPE("Event chain broken at entry " .. tostring(ev.brokenAt or 0) .. " (" .. tostring(ev.reason or "?") .. ")")
             end
         elseif sub == "repair" then
-            if not (MTR.isOfficer or MTR.isGM) then
-                MTR.MPE("Sync repair requests are officer/GM only.")
-                return
-            end
             local domain = (rest or "all"):lower()
             local did = false
             if domain == "all" or domain == "dkp" then
@@ -489,10 +483,6 @@ SlashCmdList["MEKTOWN"]=function(msg)
         if MTR.OpenFindGroup then MTR.OpenFindGroup() end
 
     elseif cmd=="gads" then
-        if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
-            MTR.MPE("Unknown command - /mek help")
-            return
-        end
         local sub = args:lower():match("^%s*(.-)%s*$")
         if not MTR.GuildAds then MTR.MPE("GuildAds module not loaded.") return end
         if sub=="start" or sub=="stop" or sub=="now" then

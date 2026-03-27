@@ -107,9 +107,6 @@ end
 -- POST
 -- ============================================================================
 function GA.PostNow()
-    if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
-        return false
-    end
     if not (MTR.isOfficer or MTR.isGM) then
         MTR.MPE("Guild Ads are restricted to officers and the Guild Master.")
         return false
@@ -159,9 +156,6 @@ end
 -- START
 -- ============================================================================
 function GA.Start()
-    if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
-        return
-    end
     if not (MTR.isOfficer or MTR.isGM) then
         MTR.MPE("Guild Ads are restricted to officers and the Guild Master.")
         return
@@ -206,9 +200,6 @@ end
 -- STOP
 -- ============================================================================
 function GA.Stop()
-    if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
-        return
-    end
     if not (MTR.isOfficer or MTR.isGM) then
         MTR.MPE("Guild Ads are restricted to officers and the Guild Master.")
         return
@@ -223,7 +214,6 @@ function GA.Stop()
 end
 
 function GA.Toggle()
-    if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then return end
     if GA.active then GA.Stop() else GA.Start() end
 end
 
@@ -231,7 +221,6 @@ end
 -- RESTORE ON LOGIN
 -- ============================================================================
 function GA.RestoreState()
-    if not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then return end
     local cfg = Cfg()
     if cfg and cfg.active then
         MTR.After(10, function()

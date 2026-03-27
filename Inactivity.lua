@@ -520,7 +520,7 @@ function MTR.InactScan()
                     if threshold ~= "never" then
 
                     local years, months, days, hours = GetGuildRosterLastOnline(i)
-                    local totalDays
+                    local totalDays = 0
                     local unknown   = false
 
                     if years ~= nil then

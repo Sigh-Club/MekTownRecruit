@@ -18,9 +18,6 @@ local MTR = MekTownRecruit
 
 MTR.VERSION = "2.1.1"
 
-MTR.MEKTOWN_GUILD_ID = "gid-d63714241d0efc00"
-MTR.MEKTOWN_GUILD_NAME = "Mektown Choppaz"
-
 
 -- ============================================================================
 -- CHAT / CHANNEL HELPERS
@@ -147,14 +144,34 @@ MTR.DEFAULTS = {
         "guild needed","want guild","guild wanted","guild recruit me",
         "guild please","guild inv","guild invite","guild inv pls",
         "guild inv please","guild inv?","lf raiding guild",
-        "looking for social guild","lf social guild","casual guild",
-        "friendly guild","new player looking for guild","returning player looking for guild",
-        "leveling guild","active guild","community guild",
+        "looking for raiding guild","want raiding guild","need raiding guild",
+        "raiding guild lf","lf raid guild","looking raid guild",
+        "raiding guild needed","raid guild lf","looking for social guild",
+        "lf social guild","social guild","casual guild","friendly guild",
+        "chill guild","social guild needed","guild for fun",
+        "casual raiding guild","social raiding guild",
+        "new player looking for guild","new to game looking for guild",
+        "returning player looking for guild","came back looking for guild",
+        "new here looking for guild","newbie looking for guild",
+        "noob looking for guild","starting out looking for guild",
+        "leveling guild","new character looking for guild",
+        "alt looking for guild","fresh 70 looking for guild",
+        "fresh 80 looking for guild","just dinged looking for guild",
+        "new max level looking for guild","looking for mentor guild",
+        "need a guild to help","learning the game guild",
+        "want to improve guild","looking for people to play with guild",
+        "want a community guild","lf community guild",
+        "looking for active guild","active guild lf","want to join a guild",
+        "lf g","guild lfg","guild lfm","recruit me guild",
+        "inv me to guild","guild inv me","guild pls","guild?",
+        "mektown","choppaz","mek","choppa",
     },
     whisperTemplates = {
-        "Hey {name}! Saw your message about {context}. We are recruiting and happy to chat if you are still looking for a guild.",
-        "Hi {name}, if you are still looking for {context}, we can share raid times and guild goals. Whisper me anytime.",
-        "Hello {name}! We are an active guild and currently recruiting. If you want details, I can send a quick overview.",
+        "Oi {name}! Saw you lookin' for {context} - perfect! MekTown Choppa'z is a WAAAGH! of friendly ork-lovers on Area 52. We raid Tue/Thu eve and Fri/Sat arvo, 9/9 BT heroic, pushin' Sunwell heroic. Fancy a chat? FOR GORK N MORK!",
+        "Hey {name}! Noticed you mentioned {context}. We're MekTown Choppa'z - biker boyz who love raiding an' socializin'. Need more DPS (20k+) an' tanks. Come join the WAAAGH!?",
+        "Hi {name}! MekTown Choppa'z here - ork-themed guild (40k lore) on Area 52. BT 9/9H, MH, Sunwell normal, pushin' Sunwell heroic. Raids: Tue/Thu 19:30, Fri/Sat 14:00 server. Wanna roll with us?",
+        "Greetin's {name}! Still seekin' a guild? MekTown Choppa'z is a social mob with good people an' a Discord full o' chat. Bring your choppa!",
+        "Oi {name}! Caught ya lookin' for {context}. MekTown Choppa'z is recruitin' - 40k-inspired biker clan on Area 52. We raid twice a week, after DPS (20k+) an' tanks. RED IZ FASTEST!",
     },
     ignoreDuration     = 300,
     enabled            = true,
@@ -174,8 +191,6 @@ MTR.DEFAULTS = {
     },
     soundAlert    = true,
     minimapButton = true,
-    uiAutoCloseOnCombat = false,
-    uiAutoCloseOnInstance = false,
     popupWidth    = 350,
     popupHeight   = 180,
     popupColor    = { r=0.1, g=0.1, b=0.1, a=0.97 },
@@ -282,15 +297,15 @@ MTR.DEFAULTS = {
     autoResponderEnabled = false,
     autoResponses        = {},
     motdTemplates = {
-        raid    = "RAID NIGHT - invites open 15 minutes before first pull. Check guild info/Discord for details.",
-        social  = "Social night - dungeons, PvP, achievements, and guild hangout.",
-        recruit = "Guild recruiting is open. Whisper an officer for details.",
+        raid    = "RAID NIGHT - Invites at 19:15, first pull 19:30. Check Discord for assignments. FOR GORK N MORK!",
+        social  = "No raid tonight - just vibin'. Dungeons, PvP, whatever. Hop in Discord!",
+        recruit = "MekTown Choppa'z is RECRUITING! DPS (20k+) and tanks wanted. Whisper an officer to apply.",
     },
     applicationLog = {},
 
     -- Guild Advertisement Auto-Poster
     guildAdMessages = {
-        { text="[Guild Ads are enabled only for authorized guild identity.]", enabled=false },
+        { text="[Enter your first recruitment message here. Supports {star} {skull} {triangle} icon codes.]", enabled=false },
     },
     guildAdConfig = {
         intervalMins = 10,
@@ -298,81 +313,6 @@ MTR.DEFAULTS = {
         active       = false,
     },
 }
-
-MTR.MEKTOWN_PRESET = {
-    keywords = {
-        "looking for guild","lf guild","lfguild","need guild","guild lf",
-        "guild needed","want guild","guild wanted","guild recruit me",
-        "guild please","guild inv","guild invite","guild inv pls",
-        "guild inv please","guild inv?","lf raiding guild",
-        "looking for raiding guild","want raiding guild","need raiding guild",
-        "raiding guild lf","lf raid guild","looking raid guild",
-        "raiding guild needed","raid guild lf","looking for social guild",
-        "lf social guild","social guild","casual guild","friendly guild",
-        "chill guild","social guild needed","guild for fun",
-        "casual raiding guild","social raiding guild",
-        "new player looking for guild","new to game looking for guild",
-        "returning player looking for guild","came back looking for guild",
-        "new here looking for guild","newbie looking for guild",
-        "noob looking for guild","starting out looking for guild",
-        "leveling guild","new character looking for guild",
-        "alt looking for guild","fresh 70 looking for guild",
-        "fresh 80 looking for guild","just dinged looking for guild",
-        "new max level looking for guild","looking for mentor guild",
-        "need a guild to help","learning the game guild",
-        "want to improve guild","looking for people to play with guild",
-        "want a community guild","lf community guild",
-        "looking for active guild","active guild lf","want to join a guild",
-        "lf g","guild lfg","guild lfm","recruit me guild",
-        "inv me to guild","guild inv me","guild pls","guild?",
-        "mektown","choppaz","mek","choppa",
-    },
-    whisperTemplates = {
-        "Oi {name}! Saw you lookin' for {context} - perfect! MekTown Choppa'z is a WAAAGH! of friendly ork-lovers on Area 52. We raid Tue/Thu eve and Fri/Sat arvo, 9/9 BT heroic, pushin' Sunwell heroic. Fancy a chat? FOR GORK N MORK!",
-        "Hey {name}! Noticed you mentioned {context}. We're MekTown Choppa'z - biker boyz who love raiding an' socializin'. Need more DPS (20k+) an' tanks. Come join the WAAAGH!?",
-        "Hi {name}! MekTown Choppa'z here - ork-themed guild (40k lore) on Area 52. BT 9/9H, MH, Sunwell normal, pushin' Sunwell heroic. Raids: Tue/Thu 19:30, Fri/Sat 14:00 server. Wanna roll with us?",
-        "Greetin's {name}! Still seekin' a guild? MekTown Choppa'z is a social mob with good people an' a Discord full o' chat. Bring your choppa!",
-        "Oi {name}! Caught ya lookin' for {context}. MekTown Choppa'z is recruitin' - 40k-inspired biker clan on Area 52. We raid twice a week, after DPS (20k+) an' tanks. RED IZ FASTEST!",
-    },
-    motdTemplates = {
-        raid    = "RAID NIGHT - Invites at 19:15, first pull 19:30. Check Discord for assignments. FOR GORK N MORK!",
-        social  = "No raid tonight - just vibin'. Dungeons, PvP, whatever. Hop in Discord!",
-        recruit = "MekTown Choppa'z is RECRUITING! DPS (20k+) and tanks wanted. Whisper an officer to apply.",
-    },
-}
-
-function MTR.IsMekTownGuild()
-    local info = MTR.GetGuildIdentityInfo and MTR.GetGuildIdentityInfo() or nil
-    local gid = tostring(info and info.guildId or "")
-    if gid ~= "" and gid == tostring(MTR.MEKTOWN_GUILD_ID or "") then return true end
-    local gname = string.lower(tostring(info and info.guildName or ""))
-    return gname == string.lower(tostring(MTR.MEKTOWN_GUILD_NAME or "mektown choppaz"))
-end
-
-function MTR.IsGuildAdsEnabled()
-    return MTR.IsMekTownGuild and MTR.IsMekTownGuild() or false
-end
-
-function MTR.ApplyGuildPresetIfNeeded()
-    local profile = MTR.db
-    if type(profile) ~= "table" then return end
-    if not (MTR.IsMekTownGuild and MTR.IsMekTownGuild()) then return end
-    local ver = "mektown-preset-v1"
-    if tostring(profile._guildPresetVersion or "") == ver then return end
-
-    local genericWhispers = MTR.DEFAULTS.whisperTemplates or {}
-    local genericMotd = MTR.DEFAULTS.motdTemplates or {}
-    if type(profile.whisperTemplates) ~= "table" or #profile.whisperTemplates == 0 or #profile.whisperTemplates == #genericWhispers then
-        profile.whisperTemplates = MTR.DeepCopy(MTR.MEKTOWN_PRESET.whisperTemplates)
-    end
-    if type(profile.keywords) ~= "table" or #profile.keywords <= 24 then
-        profile.keywords = MTR.DeepCopy(MTR.MEKTOWN_PRESET.keywords)
-    end
-    if type(profile.motdTemplates) ~= "table" or tostring(profile.motdTemplates.raid or "") == tostring(genericMotd.raid or "") then
-        profile.motdTemplates = MTR.DeepCopy(MTR.MEKTOWN_PRESET.motdTemplates)
-    end
-    profile._guildPresetVersion = ver
-end
 
 -- ============================================================================
 -- RUNTIME STATE
@@ -645,6 +585,15 @@ local function NormalizeProfileBooleans(profile)
 end
 
 
+local function GetActiveProfileTable()
+    if type(MekTownRecruitDB) ~= "table" then return nil end
+    if type(MekTownRecruitDB.profiles) ~= "table" then return nil end
+    local name = MekTownRecruitDB.activeProfile or "Default"
+    local profile = MekTownRecruitDB.profiles[name]
+    if type(profile) ~= "table" then return nil end
+    return profile
+end
+
 local function GetMutableActiveProfileTable()
     if type(MekTownRecruitDB) ~= "table" then MekTownRecruitDB = {} end
     if type(MekTownRecruitDB.profiles) ~= "table" then MekTownRecruitDB.profiles = {} end
@@ -823,7 +772,6 @@ function MTR.InitDB()
     EnsureProfile("Default")
     MTR.RefreshDB()
     if MTR.MigrateGuildScopedData then MTR.MigrateGuildScopedData() end
-    if MTR.ApplyGuildPresetIfNeeded then MTR.ApplyGuildPresetIfNeeded() end
 
     for _, profile in pairs(MekTownRecruitDB.profiles) do
         if type(profile) == "table" then
@@ -851,7 +799,6 @@ function MTR.InitDB()
     end
     MTR.RefreshDB()
     if MTR.MigrateGuildScopedData then MTR.MigrateGuildScopedData() end
-    if MTR.ApplyGuildPresetIfNeeded then MTR.ApplyGuildPresetIfNeeded() end
 
     -- Ensure account-wide storage exists
     if type(MekTownRecruitDB.charVault) ~= "table" then
@@ -1214,9 +1161,6 @@ end
 
 function MTR.GetFeatureAccess(featureName)
     if featureName == "Recruit" or featureName == "DKP" or featureName == "Inactive" or featureName == "Loot" or featureName == "GuildAds" then
-        if featureName == "GuildAds" and not (MTR.IsGuildAdsEnabled and MTR.IsGuildAdsEnabled()) then
-            return false
-        end
         if MTR.isGM == true then return true end
         local rankName, rankIndex
         if MTR.GetPlayerRankInfo then
@@ -1244,41 +1188,5 @@ function MTR.CanInvite()
     if IsInGroup() then return IsPartyLeader() end
     return true
 end
-
-function MTR.AutoCloseWindows(reason)
-    if not MTR.db then return end
-    local closed = 0
-    local function HideIfShown(frame)
-        if frame and frame.IsShown and frame:IsShown() and frame.Hide then
-            frame:Hide()
-            closed = closed + 1
-        end
-    end
-    HideIfShown(MTR.mainWin)
-    HideIfShown(MTR.memberWin)
-    HideIfShown(MTR.vaultWin)
-    if closed > 0 and MTR.dprintModule then
-        MTR.dprintModule("core", "Auto-closed", tostring(closed), "window(s) due to", tostring(reason or "event"))
-    end
-end
-
-local _mtrAutoCloseFrame = CreateFrame("Frame")
-_mtrAutoCloseFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
-_mtrAutoCloseFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-_mtrAutoCloseFrame:SetScript("OnEvent", function(_, event)
-    if not MTR.initialized or not MTR.db then return end
-    if event == "PLAYER_REGEN_DISABLED" then
-        if MTR.db.uiAutoCloseOnCombat == true then
-            MTR.AutoCloseWindows("combat")
-        end
-        return
-    end
-    if event == "PLAYER_ENTERING_WORLD" and MTR.db.uiAutoCloseOnInstance == true then
-        local inInstance, instanceType = IsInInstance()
-        if inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "pvp" or instanceType == "arena") then
-            MTR.AutoCloseWindows("instance")
-        end
-    end
-end)
 
 print("|cff00c0ff[MekTown Recruit]|r Core v" .. MTR.VERSION .. " loaded.")

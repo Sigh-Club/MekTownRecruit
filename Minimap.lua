@@ -27,8 +27,13 @@ function MTR.CreateMinimapButton()
     minimapButton:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 2, -2)
 
     local icon = minimapButton:CreateTexture(nil, "BACKGROUND")
-    icon:SetTexture("Interface\\Icons\\inv_misc_grouplooking")
+    icon:SetTexture("Interface\\Buttons\\WHITE8x8")
+    icon:SetVertexColor(0.04, 0.01, 0.01, 1.0)
     icon:SetAllPoints(minimapButton)
+
+    local border = minimapButton:CreateTexture(nil, "ARTWORK")
+    border:SetTexture("Interface\\Minimap\\UI-Minimap-Border")
+    border:SetAllPoints(minimapButton)
 
     -- Green/red dot shows live recruit scanner state
     local dot = minimapButton:CreateTexture(nil, "OVERLAY")

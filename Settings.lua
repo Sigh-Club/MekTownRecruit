@@ -8,6 +8,14 @@ local function normalizeChecked(v)
     return v == true or v == 1
 end
 
+local function splitPath(path)
+    local out = {}
+    for part in string.gmatch(path or "", "[^%.]+") do
+        out[#out + 1] = part
+    end
+    return out
+end
+
 local function deepCopy(v)
     if type(v) ~= "table" then return v end
     local out = {}

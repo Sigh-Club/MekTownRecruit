@@ -262,6 +262,7 @@ function MTR.OpenMemberWindow()
                     else
                         cfg[key] = self:GetChecked() and true or false
                     end
+                    if MTR.FlushActiveProfile then MTR.FlushActiveProfile() end
                 end)
                 return ck
             end

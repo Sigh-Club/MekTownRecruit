@@ -40,6 +40,19 @@ local function FT()
     return MTR.db.familyTree
 end
 
+local function GetAlts(mainName)
+    local ft = FT()
+    if not ft then return {} end
+    local alts = {}
+    for name, entry in pairs(ft) do
+        if not entry.isMain and entry.main == mainName then
+            alts[#alts + 1] = name
+        end
+    end
+    table.sort(alts)
+    return alts
+end
+
 -- ============================================================================
 -- SYNC
 -- ============================================================================
@@ -517,9 +530,11 @@ gtMsgFrame:SetScript("OnEvent", function(_, _, prefix, message, _, sender)
         gtRecv = { rev = tonumber(rev) or 0, hash = hash or "0", expected = tonumber(expected) or 0, chunks = {}, from = senderName }
     elseif cmd == "D" and gtRecv then
         if senderName ~= gtRecv.from then return end
+        if not (MTR.IsGuildOfficerName and MTR.IsGuildOfficerName(senderName)) then return end
         gtRecv.chunks[#gtRecv.chunks + 1] = payload
     elseif cmd == "END" and gtRecv then
         if senderName ~= gtRecv.from then return end
+        if not (MTR.IsGuildOfficerName and MTR.IsGuildOfficerName(senderName)) then return end
         local st = GTSyncState()
         local incomingRev = tonumber(gtRecv.rev) or 0
         local localRev = tonumber(st.revision or 0)
@@ -558,7 +573,7 @@ gtMsgFrame:SetScript("OnEvent", function(_, _, prefix, message, _, sender)
                 st.lastConflictAt = time()
                 st.lastConflictFrom = tostring(gtRecv.from or "?")
                 st.lastConflictReason = "hash-mismatch"
-                MTR.MPE("[GuildTree Sync] Snapshot hash mismatch from " .. tostring(gtRecv.from or "?"))
+                MTR.dprint("[GuildTree Sync] Snapshot hash mismatch from", gtRecv.from)
             end
         end
         gtRecv = nil
@@ -604,11 +619,9 @@ gtInitFrame:SetScript("OnEvent", function()
         if MTR.initialized and IsInGuild() then
             GuildRoster()  -- request fresh roster data
             MTR.After(2, function()
-                if MTR.isOfficer or MTR.isGM then
-                    ScanGuildNotes()
-                    local st = GTSyncState()
-                    GTBroadcast("GT:REQ:" .. tostring(st.hash or "0"))
-                end
+                ScanGuildNotes()
+                local st = GTSyncState()
+                GTBroadcast("GT:REQ:" .. tostring(st.hash or "0"))
             end)
         end
     end)
@@ -1090,7 +1103,7 @@ function MTR.BuildGuildTreeTab(t)
                             local arrow = expanded and "▼" or "▶"
                             local dot = main.info.online and "|cff00ff00•|r" or "|cff666666•|r"
                             local label = string.format("%s %s %s%s|r |cffaaaaaaLv%d|r", arrow, dot, CC(main.info.class), main.name, main.info.level or 0)
-                            local meta = (#main.alts > 0) and string.format("%d alts", #main.alts) or (main.info.rankName or "")
+                            local meta = (#main.alts > 0) and string.format("%d alts", #main.alts) or ""
                             local mainRow = showRow("main", 8, label, meta, 1)
                             mainRow:SetScript("OnClick", function()
                                 t._gtExpandedMains[main.name] = not expanded or nil
