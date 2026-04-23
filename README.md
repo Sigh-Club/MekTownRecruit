@@ -6,7 +6,7 @@ An all-in-one guild management suite for WoW 3.3.5a, designed to make running a 
 
 ## Addon Info
 
-- **Current Version:** `2.1.1`
+- **Current Version:** `2.2.0`
 - **Target Client:** `30300` (WoW 3.3.5a)
 - **SavedVariables:** `MekTownRecruitDB`
 
@@ -43,7 +43,7 @@ The backbone of the addon. Silently syncs DKP, recruits, bank ledgers, inactivit
 Event-driven loot prompts with configurable quality thresholds. Catches loot drops in real-time and alerts officers.
 
 ### Auction & Roll System
-Integrated in-game auctioneer and roll tracker for fair loot distribution during raids.
+Integrated in-game auctioneer and roll tracker for fair loot distribution during raids. Item links are preserved as clickable links in all raid/party/guild announcements. When a winner is declared, the addon automatically gives the item to the winner via Master Loot if the loot window is open — no manual distribution needed.
 
 ## Permissions
 
@@ -128,6 +128,11 @@ MekTownRecruit/
 Thanks to all the officers and testers who broke this repeatedly until it worked, and to the 3.3.5a UI dev community for the engine workarounds.
 
 ---
+
+## v2.2.0 Release Notes
+
+- **Item Links Fixed:** All roll and auction announcements (open, close, cancel, winner, tie) now preserve clickable item links in raid/party/guild chat instead of stripping them to plain text. Roll and auction frame titles also display clickable item links.
+- **Auto-Give Loot:** When a roll or auction winner is declared, the addon automatically attempts to give the item to the winner via Master Loot if the loot window is open and you are raid leader/assistant. On success it announces the auto-give; on failure it prints a clear manual reminder.
 
 ## v2.1.1 Release Notes
 

@@ -185,7 +185,7 @@ end
 -- Posts to RAID when in a raid, PARTY in a party, GUILD as fallback.
 -- Optional raid warning fires additionally for raid leaders / assistants.
 -- ============================================================================
-function MTR.DKPAnnounce(msg, useRW)
+function MTR.DKPAnnounce(msg, useRW, allowLinks)
     local chan
     if IsInRaid() then
         chan = "RAID"
@@ -194,9 +194,9 @@ function MTR.DKPAnnounce(msg, useRW)
     else
         chan = "GUILD"
     end
-    MTR.SendChatSafe(msg, chan)
+    MTR.SendChatSafe(msg, chan, nil, nil, allowLinks)
     if useRW and IsInRaid() and (IsRaidLeader() or UnitIsGroupAssistant("player")) then
-        MTR.SendChatSafe(msg, "RAID_WARNING")
+        MTR.SendChatSafe(msg, "RAID_WARNING", nil, nil, allowLinks)
     end
 end
 

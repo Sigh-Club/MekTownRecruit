@@ -40,7 +40,7 @@ local function AuctionRefreshFrame()
         return
     end
 
-    auctionFrame._title:SetText("|cffd4af37" .. MTR.activeBid.item .. "|r")
+    auctionFrame._title:SetText("|cffd4af37" .. (MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]") .. "|r")
 
     if MTR.activeBid.closeTime then
         local remaining = math.max(0, MTR.activeBid.closeTime - time())
@@ -148,9 +148,11 @@ local function AuctionShowFrame()
                         allBids=MTR.DeepCopy(MTR.activeBid.bids), type="auction",
                     })
                     if #MTR.db.dkpBidLog > 200 then tremove(MTR.db.dkpBidLog, 1) end
-                    local msg = string.format(">>> AUCTION WINNER: %s wins [%s] for %d DKP! New balance: %d pts.",
-                        entry.name, MTR.activeBid.item, entry.amount, MTR.DKPBalance(entry.name))
-                    MTR.DKPAnnounce(msg, MTR.activeBid.useRW)
+                    local winLink = MTR.activeBid.itemLink or ("["..MTR.activeBid.item.."]")
+                    local msg = string.format(">>> AUCTION WINNER: %s wins %s for %d DKP! New balance: %d pts.",
+                        entry.name, winLink, entry.amount, MTR.DKPBalance(entry.name))
+                    MTR.DKPAnnounce(msg, MTR.activeBid.useRW, true)
+                    MTR.TryGiveLoot(MTR.activeBid.itemLink, entry.name)
                     MTR.activeBid = nil
                     auctionFrame:Hide()
                     MTR.DKPSyncToRaidSafe()
@@ -180,9 +182,11 @@ local function AuctionShowFrame()
                         winner=n, amount=amt, allBids=MTR.DeepCopy(MTR.activeBid.bids), type="auction",
                     })
                     if #MTR.db.dkpBidLog > 200 then tremove(MTR.db.dkpBidLog, 1) end
-                    local msg = string.format(">>> AUCTION WINNER: %s wins [%s] for %d DKP! New balance: %d pts.",
-                        n, MTR.activeBid.item, amt, MTR.DKPBalance(n))
-                    MTR.DKPAnnounce(msg, MTR.activeBid.useRW)
+                    local winLink = MTR.activeBid.itemLink or ("["..MTR.activeBid.item.."]")
+                    local msg = string.format(">>> AUCTION WINNER: %s wins %s for %d DKP! New balance: %d pts.",
+                        n, winLink, amt, MTR.DKPBalance(n))
+                    MTR.DKPAnnounce(msg, MTR.activeBid.useRW, true)
+                    MTR.TryGiveLoot(MTR.activeBid.itemLink, n)
                     MTR.activeBid = nil
                     auctionFrame:Hide()
                     MTR.DKPSyncToRaidSafe()
@@ -200,7 +204,7 @@ local function AuctionShowFrame()
         clBtn:SetScript("OnClick", function()
             if not MTR.activeBid then MTR.MPE("No active auction.") return end
             MTR.activeBid.closeTime = time() - 1
-            MTR.DKPAnnounce(">>> BIDDING CLOSED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..". Awarding shortly...", MTR.activeBid.useRW)
+            MTR.DKPAnnounce(">>> BIDDING CLOSED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..". Awarding shortly...", MTR.activeBid.useRW, true)
             AuctionRefreshFrame()
         end)
 
@@ -211,7 +215,7 @@ local function AuctionShowFrame()
         canBtn:SetText("Cancel")
         canBtn:SetScript("OnClick", function()
             if not MTR.activeBid then auctionFrame:Hide() return end
-            MTR.DKPAnnounce(">>> Auction CANCELLED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..".", MTR.activeBid.useRW)
+            MTR.DKPAnnounce(">>> Auction CANCELLED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..".", MTR.activeBid.useRW, true)
             MTR.activeBid = nil
             auctionFrame:Hide()
         end)
@@ -229,7 +233,7 @@ local function AuctionShowFrame()
                 if MTR.activeBid and MTR.activeBid.closeTime and time() >= MTR.activeBid.closeTime then
                     if not MTR.activeBid.announced then
                         MTR.activeBid.announced = true
-                        MTR.DKPAnnounce(">>> BIDDING CLOSED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..". Awarding shortly...", MTR.activeBid.useRW)
+            MTR.DKPAnnounce(">>> BIDDING CLOSED for "..(MTR.activeBid.itemLink or "["..MTR.activeBid.item.."]")..". Awarding shortly...", MTR.activeBid.useRW, true)
                     end
                 end
             end
@@ -261,7 +265,7 @@ function MTR.AuctionOpen(itemName, minBid, timeSecs, useRW)
     }
     local timeStr = timeSecs and (" You have "..timeSecs.."s!") or ""
     local minStr  = minBid and (" Min bid: "..minBid.." pts.") or ""
-    MTR.DKPAnnounce(">>> AUCTION OPEN: "..announceItem..minStr.." Whisper "..MTR.playerName.." your bid OR type 'bid <amount>' in chat!"..timeStr, useRW)
+    MTR.DKPAnnounce(">>> AUCTION OPEN: "..announceItem..minStr.." Whisper "..MTR.playerName.." your bid OR type 'bid <amount>' in chat!"..timeStr, useRW, true)
     MTR.MP("Auction opened: "..displayName)
     AuctionShowFrame()
 end

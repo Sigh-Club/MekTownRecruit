@@ -1,8 +1,8 @@
 ## Interface: 30300
 ## Title: MekTown Recruit
-## Notes: MekTown Recruit Guild Suite v2.1.1
+## Notes: MekTown Recruit Guild Suite v2.2.0
 ## Author: MekTown Choppaz
-## Version: 2.1.1
+## Version: 2.2.0
 ## SavedVariables: MekTownRecruitDB
 
 Core.lua

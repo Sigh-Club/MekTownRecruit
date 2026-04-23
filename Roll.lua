@@ -43,7 +43,7 @@ local function RollRefreshFrame()
         return
     end
 
-    rollFrame._title:SetText("|cffd4af37["..MTR.activeRoll.item.."] "..MTR.activeRoll.rollType.."|r")
+    rollFrame._title:SetText("|cffd4af37"..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]").." "..MTR.activeRoll.rollType.."|r")
 
     if MTR.activeRoll.closeTime then
         local remaining = math.max(0, MTR.activeRoll.closeTime - time())
@@ -118,7 +118,7 @@ local function RollDeclareWinner()
         local names = table.concat(tied, ", ")
         local tieLink = MTR.activeRoll.itemLink or ("["..MTR.activeRoll.item.."]")
         MTR.DKPAnnounce(">>> TIE for "..tieLink.." between "..names.."! Reroll: /roll. You have "..
-            (MTR.activeRoll.rollDuration or 60).."s!", MTR.activeRoll.useRW)
+            (MTR.activeRoll.rollDuration or 60).."s!", MTR.activeRoll.useRW, true)
         RollRefreshFrame()
         return
     end
@@ -128,7 +128,9 @@ local function RollDeclareWinner()
     local winLink = MTR.activeRoll.itemLink or ("["..MTR.activeRoll.item.."]")
     local msg = string.format(">>> ROLL WINNER: %s rolled %d and wins %s (%s)!",
         winner, winVal, winLink, MTR.activeRoll.rollType)
-    MTR.DKPAnnounce(msg, MTR.activeRoll.useRW)
+    MTR.DKPAnnounce(msg, MTR.activeRoll.useRW, true)
+
+    MTR.TryGiveLoot(MTR.activeRoll.itemLink, winner)
 
     table.insert(MTR.db.dkpBidLog, {
         date     = date("%Y-%m-%d %H:%M:%S"),
@@ -217,7 +219,7 @@ local function RollShowFrame()
         closeBtn:SetScript("OnClick", function()
             if not MTR.activeRoll then rollFrame:Hide() return end
             MTR.activeRoll.closeTime = time() - 1
-            MTR.DKPAnnounce(">>> ROLLS CLOSED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..". Declaring winner...", MTR.activeRoll.useRW)
+            MTR.DKPAnnounce(">>> ROLLS CLOSED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..". Declaring winner...", MTR.activeRoll.useRW, true)
             MTR.After(1, RollDeclareWinner)
         end)
 
@@ -228,7 +230,7 @@ local function RollShowFrame()
         canBtn:SetText("Cancel")
         canBtn:SetScript("OnClick", function()
             if MTR.activeRoll then
-                MTR.DKPAnnounce(">>> Roll CANCELLED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..".", MTR.activeRoll.useRW)
+                MTR.DKPAnnounce(">>> Roll CANCELLED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..".", MTR.activeRoll.useRW, true)
                 MTR.activeRoll = nil
             end
             rollFrame:Hide()
@@ -247,7 +249,7 @@ local function RollShowFrame()
                 if MTR.activeRoll and MTR.activeRoll.closeTime and time() >= MTR.activeRoll.closeTime then
                     if not MTR.activeRoll.timerFired then
                         MTR.activeRoll.timerFired = true
-                        MTR.DKPAnnounce(">>> ROLLS CLOSED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..". Calculating...", MTR.activeRoll.useRW)
+                        MTR.DKPAnnounce(">>> ROLLS CLOSED for "..(MTR.activeRoll.itemLink or "["..MTR.activeRoll.item.."]")..". Calculating...", MTR.activeRoll.useRW, true)
                         MTR.After(1, RollDeclareWinner)
                     end
                 end
@@ -303,7 +305,7 @@ function MTR.RollOpen(itemName, rollType, timeSecs, useRW)
     }
 
     local timeStr = timeSecs and (" You have "..timeSecs.."s!") or ""
-    MTR.DKPAnnounce(">>> ROLL FOR LOOT: "..announceItem.." ("..rollType..") - /roll"..timeStr, useRW)
+    MTR.DKPAnnounce(">>> ROLL FOR LOOT: "..announceItem.." ("..rollType..") - /roll"..timeStr, useRW, true)
     MTR.MP("Roll opened: "..displayName.." ("..rollType..")")
     RollShowFrame()
 end

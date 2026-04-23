@@ -16,7 +16,7 @@
 MekTownRecruit = MekTownRecruit or {}
 local MTR = MekTownRecruit
 
-MTR.VERSION = "2.1.1"
+MTR.VERSION = "2.2.0"
 
 
 -- ============================================================================
@@ -517,6 +517,43 @@ end
 
 function MTR.IsItemLink(str)
     return str ~= nil and str:find("|Hitem:") ~= nil
+end
+
+function MTR.TryGiveLoot(itemLink, playerName)
+    if not itemLink or not playerName then return false end
+
+    if not LootFrame or not LootFrame:IsShown() then
+        MTR.MPE("Loot window not open — please give "..(MTR.ItemLinkToName(itemLink) or "item").." to "..playerName.." manually.")
+        return false
+    end
+
+    if not (IsRaidLeader() or UnitIsGroupAssistant("player")) then
+        MTR.MPE("You are not raid leader/assistant — cannot auto-give loot.")
+        return false
+    end
+
+    local targetName = playerName:match("^([^%-]+)") or playerName
+    local numSlots = GetNumLootItems()
+    for slot = 1, numSlots do
+        local slotLink = GetLootSlotLink(slot)
+        if slotLink and slotLink == itemLink then
+            for ci = 1, 40 do
+                local candName = GetMasterLootCandidate(slot, ci)
+                if not candName then break end
+                local candShort = candName:match("^([^%-]+)") or candName
+                if candShort == targetName then
+                    GiveMasterLoot(slot, ci)
+                    MTR.MP("|cff00ff00Auto-gave |r"..itemLink.."|cff00ff00 to "..playerName.."|r")
+                    return true
+                end
+            end
+            MTR.MPE(playerName.." not found in loot candidates for this item. Please distribute manually.")
+            return false
+        end
+    end
+
+    MTR.MPE("Item "..(MTR.ItemLinkToName(itemLink) or "?").." not found in loot window. Please distribute manually.")
+    return false
 end
 
 -- ============================================================================
