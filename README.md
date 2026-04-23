@@ -129,16 +129,14 @@ Thanks to all the officers and testers who broke this repeatedly until it worked
 
 ---
 
-## v2.2.0 Release Notes
+### v2.2.0
+- Fixed item links — roll/auction announcements now show clickable links instead of plain text
+- Auto-give loot — winner automatically receives the item via Master Loot when loot window is open
 
-- **Item Links Fixed:** All roll and auction announcements (open, close, cancel, winner, tie) now preserve clickable item links in raid/party/guild chat instead of stripping them to plain text. Roll and auction frame titles also display clickable item links.
-- **Auto-Give Loot:** When a roll or auction winner is declared, the addon automatically attempts to give the item to the winner via Master Loot if the loot window is open and you are raid leader/assistant. On success it announces the auto-give; on failure it prints a clear manual reminder.
-
-## v2.1.1 Release Notes
-
-- **Sync Engine Hardened:** All peer-to-peer sync buffers upgraded to sender-keyed tables — concurrent broadcasts from multiple officers no longer corrupt data or get rejected as stale.
-- **Generic Release Ready:** All in-game UI text, defaults, and templates are now guild-agnostic. No hardcoded guild names, ranks, or realm-specific strings in user-facing content.
-- **Inactivity Immunity:** Guild Master (Rank 0) and Officers (Rank 1) are hard-coded immune to inactivity kicks. Whitelist system syncs across all officers.
-- **LootDetect Fix:** Resolved a bug where the `LOOT_OPENED` script handler was being overwritten by a subsequent `SetScript` call.
-- **Revision Logic Fix:** Same-revision sync packets are now accepted for append-only logs where internal deduplication makes merging safe, preventing false stale rejections during concurrent officer operations.
-- **Headless Test Suite:** 62 automated tests covering core utilities, permissions, sync concurrency, DKP ledger, inactivity scanning, guild tree, character vault, and loot detection.
+### v2.1.1
+- Sync engine hardened for concurrent officer broadcasts
+- Guild-agnostic defaults and UI text
+- Inactivity immunity for GM/Officers, synced whitelist
+- LootDetect script handler fix
+- Same-revision sync acceptance for append-only logs
+- 62 automated tests
