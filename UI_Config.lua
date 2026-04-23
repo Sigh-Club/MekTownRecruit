@@ -211,7 +211,7 @@ local function CreateMainWindow()
     -- =========================================================================
     local WORKSPACES = {
         { name = "Utility", color = "|cff00ccff", tabs = {"Vault", "Radar", "Standings", "Roll"} },
-        { name = "Guild",   color = "|cffff2020", tabs = {"Recruit", "Ads", "DKP", "Auction", "Inactive", "Guild"} },
+        { name = "Guild",   color = "|cffff2020", tabs = {"Recruit", "Ads", "DKP", "Auction", "Roll", "Inactive", "Guild"} },
         { name = "Admin",   color = "|cffd4af37", tabs = {"Profile", "Access"} },
     }
 
