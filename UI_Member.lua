@@ -68,7 +68,7 @@ function MTR.OpenMemberWindow()
 
         local hdr=memberWin:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
         hdr:SetPoint("TOPLEFT",memberWin,"TOPLEFT",16,-16)
-        hdr:SetText("|cffff2020MekTown Choppa'z|r  |cffd4af37Member Panel|r  |cffaaaaaa v"..(MTR.VERSION or "8").."|r")
+        hdr:SetText("|cffff2020MekTown Recruit|r  |cffd4af37Member Panel|r  |cffaaaaaa v"..(MTR.VERSION or "8").."|r")
 
         local sep=memberWin:CreateTexture(nil,"ARTWORK")
         sep:SetColorTexture(0.3,0.3,0.5,0.5)

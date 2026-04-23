@@ -1,0 +1,5 @@
+# Development / testing — not shipped with addon
+tests/
+.luacheckrc
+TESTUPGRADE.MD
+ASCENSION_LAUNCHER_APPLICATION.md
