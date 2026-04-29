@@ -6,7 +6,7 @@ An all-in-one guild management suite for WoW 3.3.5a, designed to make running a 
 
 ## Addon Info
 
-- **Current Version:** `2.2.0`
+- **Current Version:** `2.3.0`
 - **Target Client:** `30300` (WoW 3.3.5a)
 - **SavedVariables:** `MekTownRecruitDB`
 
@@ -128,6 +128,14 @@ MekTownRecruit/
 Thanks to all the officers and testers who broke this repeatedly until it worked, and to the 3.3.5a UI dev community for the engine workarounds.
 
 ---
+
+### v2.3.0
+- **Recruit Scanner trade/spam filter** — new "Must NOT contain" setting blocks WTS/WTB/carry/boost/etc. messages from triggering guild recruit popups
+- **Group Radar: Mythic+ / Bonus Coin split** — M+ and BC are now separate alert toggles so you can enable Mythic+ popups without requiring Bonus Coin mention
+- **Fixed lfg/lfguild collision** — "lfguild" no longer misclassified as group-search; guild-context messages with lfg/lfm pass through correctly
+- **Fixed GroupRadar pattern matching** — messageMustNotContain/messageMustContain now use plain text search instead of Lua patterns, preventing accidental regex behavior
+- **Removed overly generic keywords** (mek, choppa, mektown, choppaz) that caused false positives
+- **Profile migration** — existing SavedVars automatically receive new mustNotContain, alertMplus, and textAlertMplus keys
 
 ### v2.2.0
 - Fixed item links — roll/auction announcements now show clickable links instead of plain text
