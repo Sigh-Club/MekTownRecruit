@@ -495,11 +495,25 @@ end
 -- GROUP-RADAR MESSAGE EXCLUSION
 -- Keep group-finding traffic completely separate from recruit detection.
 -- ============================================================================
+local function IsStandaloneWord(msg, word)
+    local start, finish = msg:find(word, 1, true)
+    while start do
+        local before = start > 1  and msg:sub(start - 1, start - 1) or ""
+        local after  = finish < #msg and msg:sub(finish + 1, finish + 1) or ""
+        if (before == "" or not before:match("[a-z]")) and
+           (after == ""  or not after:match("[a-z]")) then
+            return true
+        end
+        start, finish = msg:find(word, finish + 1, true)
+    end
+    return false
+end
+
 local function LooksLikeGroupSearch(lower)
     if not lower or lower == "" then return false end
     -- Match "lfg"/"lfm" only as standalone words (not "lfguild")
     -- If the message also contains "guild", it's guild-seeking, not group-seeking
-    if lower:find("%flfm%f") or lower:find("%flfg%f") then
+    if IsStandaloneWord(lower, "lfm") or IsStandaloneWord(lower, "lfg") then
         if lower:find("guild", 1, true) then return false end
         return true
     end
