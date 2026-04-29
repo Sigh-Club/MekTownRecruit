@@ -164,7 +164,6 @@ MTR.DEFAULTS = {
         "looking for active guild","active guild lf","want to join a guild",
         "lf g","guild lfg","guild lfm","recruit me guild",
         "inv me to guild","guild inv me","guild pls","guild?",
-        "mektown","choppaz","mek","choppa",
     },
     whisperTemplates = {
         "Oi {name}! Saw you lookin' for {context} - perfect! MekTown Choppa'z is a WAAAGH! of friendly ork-lovers on Area 52. We raid Tue/Thu eve and Fri/Sat arvo, 9/9 BT heroic, pushin' Sunwell heroic. Fancy a chat? FOR GORK N MORK!",
@@ -183,6 +182,7 @@ MTR.DEFAULTS = {
         "recruiting members","guild is looking for",
         "we are recruiting","guild advertisement",
     },
+    mustNotContain = "wtb,wts,selling,buying,carry,boost,anal,trade,http,sell,gold buy,powerlevel",
     enableDebug   = false,
     debugSettings = {
         enabled = false,
@@ -828,6 +828,11 @@ function MTR.InitDB()
                 profile.debugSettings.modules = {}
             end
             profile.debug = nil
+
+            -- Migration: ensure mustNotContain exists for profiles created before this feature
+            if profile.mustNotContain == nil then
+                profile.mustNotContain = MTR.DEFAULTS.mustNotContain
+            end
 
             -- Normalize legacy checkbox-backed flags to strict booleans so old
             -- saves cannot accidentally enable features through truthy values.

@@ -770,9 +770,14 @@ local function CreateMainWindow()
         mainWin._addReqEB = MakeIn("AddReq",t,RW,RX,-202)
         if Settings then Settings.BindEdit(mainWin, mainWin._addReqEB, "additionalRequired") end
 
+        local lbl1b = t:CreateFontString(nil,"OVERLAY","GameFontNormal")
+        lbl1b:SetPoint("TOPLEFT",t,"TOPLEFT",RX,-232) lbl1b:SetText("Must NOT contain (comma-sep, trade/spam filter):")
+        mainWin._mustNotEB = MakeIn("MustNot",t,RW,RX,-248)
+        mainWin._mustNotEB:SetScript("OnTextChanged",function(s) SaveValue("mustNotContain", s:GetText() or "") end)
+
         local lbl2 = t:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        lbl2:SetPoint("TOPLEFT",t,"TOPLEFT",RX,-232) lbl2:SetText("Ignore duration (seconds):")
-        mainWin._slIgnore = MakeSL("Ignore",t,RW,RX,-248,60,3600,60)
+        lbl2:SetPoint("TOPLEFT",t,"TOPLEFT",RX,-278) lbl2:SetText("Ignore duration (seconds):")
+        mainWin._slIgnore = MakeSL("Ignore",t,RW,RX,-294,60,3600,60)
         if Settings then Settings.BindSlider(mainWin, mainWin._slIgnore, "ignoreDuration", {default=300, step=60}) end
         mainWin._slIgnore:SetScript("OnValueChanged",function(s,v)
             local r=math.floor(v/60)*60
@@ -780,9 +785,9 @@ local function CreateMainWindow()
             SaveValue("ignoreDuration", r)
         end)
 
-        PlaceHelpText(t, RX, -286, RW, "Format: Keywords, templates, and ad phrases are one entry per line. Whisper uses a random template and supports {name} and {context}. Ignore Ads skips messages matching ad phrases.")
+        PlaceHelpText(t, RX, -332, RW, "Format: Keywords, templates, and ad phrases are one entry per line. Whisper uses a random template and supports {name} and {context}. Ignore Ads skips messages matching ad phrases. Must NOT contain blocks trade/spam messages from triggering popups.")
 
-        MakeSep(t,"Scan Channels",-412)
+        MakeSep(t,"Scan Channels",-458)
         local chDefs = {
             {"CHAT_MSG_CHANNEL","Trade/General"}, {"CHAT_MSG_SAY","Say"},
             {"CHAT_MSG_YELL","Yell"},             {"CHAT_MSG_PARTY","Party"},
@@ -795,7 +800,7 @@ local function CreateMainWindow()
             local row = math.floor((i-1) / 2)
             local cname = "RcCh"..i
             local ck = CreateFrame("CheckButton","MekCK_"..cname,t,"UICheckButtonTemplate")
-            ck:SetPoint("TOPLEFT",t,"TOPLEFT", RX+col*220, -428-row*26)
+            ck:SetPoint("TOPLEFT",t,"TOPLEFT", RX+col*220, -474-row*26)
             _G["MekCK_"..cname.."Text"]:SetText(cd[2])
             ck.channel = cd[1]
             ck:SetScript("OnClick",function(s) SaveBool("scanChannels."..s.channel, s:GetChecked()) end)
@@ -2116,6 +2121,7 @@ local function CreateMainWindow()
         local ck_rcDbg = _G["MekCK_RcDebug"]   if ck_rcDbg  then ck_rcDbg:SetChecked(cfg.enableDebug == true) end
         local ck_rcIgn = _G["MekCK_RcIgnAds"]  if ck_rcIgn  then ck_rcIgn:SetChecked(cfg.ignoreAds ~= false) end
         local eb_addReq = _G["MekIn_AddReq"]    if eb_addReq then eb_addReq:SetText(cfg.additionalRequired or "") end
+        local eb_mustNot = _G["MekIn_MustNot"]  if eb_mustNot then eb_mustNot:SetText(cfg.mustNotContain or "") end
         if mainWin._slIgnore then mainWin._slIgnore:SetValue(cfg.ignoreDuration or 300) end
 
         if mainWin._chanChecks then

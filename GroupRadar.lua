@@ -431,21 +431,21 @@ local function HandleChatMessage(event, message, sender)
 
     local msgLow = message:lower():gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","")
 
-    -- Must-NOT-contain
+    -- Must-NOT-contain (plain text search, not Lua patterns)
     for pat in (cfg.messageMustNotContain or ""):gmatch("([^,]+)") do
         local p=pat:match("^%s*(.-)%s*$")
-        if p~="" and msgLow:match(p) then
+        if p~="" and msgLow:find(p, 1, true) then
             FeedPush(sender,message,"filtered","|cffff4444[blocked:"..p.."]|r") return
         end
     end
 
-    -- Must-contain
+    -- Must-contain (plain text search, not Lua patterns)
     local mustContain=cfg.messageMustContain or ""
     if mustContain~="" then
         local found=false
         for pat in mustContain:gmatch("([^,]+)") do
             local p=pat:match("^%s*(.-)%s*$")
-            if p~="" and msgLow:match(p) then found=true break end
+            if p~="" and msgLow:find(p, 1, true) then found=true break end
         end
         if not found then
             FeedPush(sender,message,"filtered","|cffff4444[must-contain]|r") return

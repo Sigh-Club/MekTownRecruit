@@ -497,7 +497,12 @@ end
 -- ============================================================================
 local function LooksLikeGroupSearch(lower)
     if not lower or lower == "" then return false end
-    if lower:find("lfm", 1, true) or lower:find("lfg", 1, true) then return true end
+    -- Match "lfg"/"lfm" only as standalone words (not "lfguild")
+    -- If the message also contains "guild", it's guild-seeking, not group-seeking
+    if lower:find("%flfm%f") or lower:find("%flfg%f") then
+        if lower:find("guild", 1, true) then return false end
+        return true
+    end
     if lower:find("looking for", 1, true) then
         if lower:find("looking for guild", 1, true) or lower:find("looking for a guild", 1, true) or lower:find("looking for raiding guild", 1, true) or lower:find("looking for social guild", 1, true) then
             return false
@@ -554,6 +559,15 @@ scanFrame:SetScript("OnEvent", function(self, event, message, sender)
     if IsRecruitmentAd(lower) then
         MTR.dprint("Skipping ad from", sender)
         return
+    end
+
+    -- Must-NOT-contain filter (trade/selling spam)
+    for w in (MTR.db.mustNotContain or ""):gmatch("([^,]+)") do
+        local pat = w:match("^%s*(.-)%s*$"):lower()
+        if pat ~= "" and lower:find(pat, 1, true) then
+            MTR.dprint("Skipping blocked word:", pat, "from", sender)
+            return
+        end
     end
 
     -- Do not hijack LFG/LFM traffic. Those belong to Group Radar, not Recruit.
