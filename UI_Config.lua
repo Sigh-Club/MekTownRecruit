@@ -1959,7 +1959,7 @@ local function CreateMainWindow()
         -- └─────────────────────────────────────────────────────────────────┘
         -- Vertical divider between the two alert columns
         local vdiv = t:CreateTexture(nil,"ARTWORK")
-        vdiv:SetColorTexture(0.3,0.3,0.3,0.5) vdiv:SetSize(1,172)
+        vdiv:SetColorTexture(0.3,0.3,0.3,0.5) vdiv:SetSize(1,200)
         vdiv:SetPoint("TOPLEFT",t,"TOPLEFT",440,-10)
 
         -- Column A header
@@ -1975,8 +1975,9 @@ local function CreateMainWindow()
             {"Tank", "LFM Tank",     "textAlertLfmTank",    "alertLfmTank"},
             {"Heal", "LFM Healer",   "textAlertLfmHeal",    "alertLfmHeal"},
             {"MsLvl","MS Leveling",  "textAlertMsLeveling", "alertMsLeveling"},
-            {"MsGld","MS Gold",      "textAlertMsGold",     "alertMsGold"},
-            {"Bc",   "BC / World",   "textAlertBc",         "alertBc"},
+            {"MsGld","MS Gold",     "textAlertMsGold",     "alertMsGold"},
+            {"Mplus","Mythic+",     "textAlertMplus",      "alertMplus"},
+            {"Bc",   "Bonus Coin",  "textAlertBc",         "alertBc"},
         }
         for i,row in ipairs(alertRows) do
             local y = -(16 + (i-1)*28)
@@ -1986,9 +1987,9 @@ local function CreateMainWindow()
         -- Last row bottom: -(16+5*28) = -156, checkbox 24px → bottom at -180
 
         -- ┌─────────────────────────────────────────────────────────────────┐
-        -- │  SECTION 2 — Suppression (horizontal row, y = -188 → -224)    │
+        -- │  SECTION 2 — Suppression (horizontal row, y = -216 → -252)    │
         -- └─────────────────────────────────────────────────────────────────┘
-        Sec(-188,"|cffaaaaaa Suppress popups when:|r")
+        Sec(-216,"|cffaaaaaa Suppress popups when:|r")
         -- 4 checkboxes across full width at 220px intervals
         local supRows = {
             {"SupGrp",  "In a group",          "doNotAlertInGroup"},
@@ -1997,34 +1998,34 @@ local function CreateMainWindow()
             {"SupSil",  "Silent (no popups)",   "silentNotifications"},
         }
         for i,row in ipairs(supRows) do
-            CKAt(row[1],row[2],(i-1)*220,-204,row[3])
+            CKAt(row[1],row[2],(i-1)*220,-232,row[3])
         end
 
         -- ┌─────────────────────────────────────────────────────────────────┐
-        -- │  SECTION 3 — Message filters (y = -238 → -320)                │
+        -- │  SECTION 3 — Message filters (y = -266 → -348)                │
         -- └─────────────────────────────────────────────────────────────────┘
-        Sec(-238,"|cffaaaaaa Message Filters|r")
+        Sec(-266,"|cffaaaaaa Message Filters|r")
 
         local lbl1=t:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        lbl1:SetPoint("TOPLEFT",t,"TOPLEFT",4,-252) lbl1:SetText("Must contain (blank = any):")
-        local mustEB=MakeIn("GRMustContain",t,FW,4,-268)
+        lbl1:SetPoint("TOPLEFT",t,"TOPLEFT",4,-280) lbl1:SetText("Must contain (blank = any):")
+        local mustEB=MakeIn("GRMustContain",t,FW,4,-296)
         if Settings then Settings.BindEdit(mainWin, mustEB, "groupRadarConfig.messageMustContain") end
         mustEB:SetScript("OnTextChanged",function(s) SaveValue("groupRadarConfig.messageMustContain", s:GetText() or "") end)
 
         local lbl2=t:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        lbl2:SetPoint("TOPLEFT",t,"TOPLEFT",4,-298) lbl2:SetText("Must NOT contain (comma-separated):")
-        local mustNotEB=MakeIn("GRMustNotContain",t,FW,4,-314)
+        lbl2:SetPoint("TOPLEFT",t,"TOPLEFT",4,-326) lbl2:SetText("Must NOT contain (comma-separated):")
+        local mustNotEB=MakeIn("GRMustNotContain",t,FW,4,-342)
         if Settings then Settings.BindEdit(mainWin, mustNotEB, "groupRadarConfig.messageMustNotContain") end
         mustNotEB:SetScript("OnTextChanged",function(s) SaveValue("groupRadarConfig.messageMustNotContain", s:GetText() or "") end)
 
         -- ┌─────────────────────────────────────────────────────────────────┐
-        -- │  SECTION 4 — Timing sliders (y = -348 → -400)                 │
+        -- │  SECTION 4 — Timing sliders (y = -376 → -428)                 │
         -- └─────────────────────────────────────────────────────────────────┘
-        Sec(-348,"|cffaaaaaa Timing|r")
+        Sec(-376,"|cffaaaaaa Timing|r")
 
         local lbl3=t:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        lbl3:SetPoint("TOPLEFT",t,"TOPLEFT",4,-362) lbl3:SetText("Alert cooldown per player (s):")
-        local spamSL=MakeSL("GRSpamCD",t,390,4,-380,30,600,30)
+        lbl3:SetPoint("TOPLEFT",t,"TOPLEFT",4,-390) lbl3:SetText("Alert cooldown per player (s):")
+        local spamSL=MakeSL("GRSpamCD",t,390,4,-408,30,600,30)
         if Settings then Settings.BindSlider(mainWin, spamSL, "groupRadarConfig.dontDisplaySpammers", {default=180, step=30}) end
         spamSL:SetScript("OnValueChanged",function(s,v)
             local r=math.floor(v/30)*30
@@ -2033,8 +2034,8 @@ local function CreateMainWindow()
         end)
 
         local lbl4=t:CreateFontString(nil,"OVERLAY","GameFontNormal")
-        lbl4:SetPoint("TOPLEFT",t,"TOPLEFT",454,-362) lbl4:SetText("Hide recruiter from window after (s):")
-        local expirySL=MakeSL("GRExpiry",t,390,454,-380,60,600,60)
+        lbl4:SetPoint("TOPLEFT",t,"TOPLEFT",454,-390) lbl4:SetText("Hide recruiter from window after (s):")
+        local expirySL=MakeSL("GRExpiry",t,390,454,-408,60,600,60)
         if Settings then Settings.BindSlider(mainWin, expirySL, "groupRadarConfig.hideFromDetailAfter", {default=180, step=60}) end
         expirySL:SetScript("OnValueChanged",function(s,v)
             local r=math.floor(v/60)*60
@@ -2043,12 +2044,12 @@ local function CreateMainWindow()
         end)
 
         -- ┌─────────────────────────────────────────────────────────────────┐
-        -- │  SECTION 5 — Action buttons (y = -418 → -454)                 │
+        -- │  SECTION 5 — Action buttons (y = -446 → -482)                 │
         -- └─────────────────────────────────────────────────────────────────┘
-        Sec(-416,"|cffaaaaaa Actions|r")
+        Sec(-444,"|cffaaaaaa Actions|r")
 
         local openBtn=MakeBTStd(t,"Open Group Radar","LG")
-        openBtn:SetPoint("TOPLEFT",t,"TOPLEFT",4,-432)
+        openBtn:SetPoint("TOPLEFT",t,"TOPLEFT",4,-460)
         openBtn:SetScript("OnClick",function()
             if MTR.OpenGroupRadar then MTR.OpenGroupRadar() end
         end)

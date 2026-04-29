@@ -173,8 +173,8 @@ function MTR.OpenMemberWindow()
                 local watchKeys = {
                     "alertLfmDps", "alertLfmTank", "alertLfmHeal",
                     "textAlertLfmDps", "textAlertLfmTank", "textAlertLfmHeal",
-                    "alertMsGold", "alertMsLeveling", "alertBc",
-                    "textAlertMsGold", "textAlertMsLeveling", "textAlertBc",
+                    "alertMsGold", "alertMsLeveling", "alertMplus", "alertBc",
+                    "textAlertMsGold", "textAlertMsLeveling", "textAlertMplus", "textAlertBc",
                     "messageMustContain", "messageMustNotContain",
                 }
                 for _, key in ipairs(watchKeys) do
@@ -275,7 +275,8 @@ function MTR.OpenMemberWindow()
             MakeCK(f, "LFM Heal popup",   "alertLfmHeal",      20, -130)
             MakeCK(f, "MS Gold popup",    "alertMsGold",       280,-82)
             MakeCK(f, "MS Leveling popup", "alertMsLeveling",  280,-106)
-            MakeCK(f, "Bonus Coin popup", "alertBc",           280,-130)
+            MakeCK(f, "Mythic+ popup",    "alertMplus",        280,-130)
+            MakeCK(f, "Bonus Coin popup", "alertBc",           280,-154)
 
             local sec2=f:CreateFontString(nil,"OVERLAY","GameFontNormal")
             sec2:SetPoint("TOPLEFT",f,"TOPLEFT",20,-170)
@@ -285,18 +286,19 @@ function MTR.OpenMemberWindow()
             MakeCK(f, "LFM Heal text",    "textAlertLfmHeal",   20, -236)
             MakeCK(f, "MS Gold text",     "textAlertMsGold",    280,-188)
             MakeCK(f, "MS Leveling text", "textAlertMsLeveling",280,-212)
-            MakeCK(f, "Bonus Coin text",  "textAlertBc",        280,-236)
+            MakeCK(f, "Mythic+ text",     "textAlertMplus",      280,-236)
+            MakeCK(f, "Bonus Coin text",  "textAlertBc",         280,-260)
 
             local sec3=f:CreateFontString(nil,"OVERLAY","GameFontNormal")
-            sec3:SetPoint("TOPLEFT",f,"TOPLEFT",20,-276)
+            sec3:SetPoint("TOPLEFT",f,"TOPLEFT",20,-300)
             sec3:SetText("Suppress popups when")
-            MakeCK(f, "In a group",       "doNotAlertInGroup",   20, -294)
-            MakeCK(f, "In combat",        "doNotAlertInCombat",  20, -318)
-            MakeCK(f, "In instance",      "dontAlertInInstance", 280,-294)
-            MakeCK(f, "Silent mode",      "silentNotifications", 280,-318)
+            MakeCK(f, "In a group",       "doNotAlertInGroup",   20, -318)
+            MakeCK(f, "In combat",        "doNotAlertInCombat",  20, -342)
+            MakeCK(f, "In instance",      "dontAlertInInstance", 280,-318)
+            MakeCK(f, "Silent mode",      "silentNotifications", 280,-342)
 
             local mustLbl=f:CreateFontString(nil,"OVERLAY","GameFontNormal")
-            mustLbl:SetPoint("TOPLEFT",f,"TOPLEFT",20,-354)
+            mustLbl:SetPoint("TOPLEFT",f,"TOPLEFT",20,-378)
             mustLbl:SetText("Must contain:")
             local mustEB=CreateFrame("EditBox",nil,f,"InputBoxTemplate")
             mustEB:SetSize(220,24)
@@ -313,7 +315,7 @@ function MTR.OpenMemberWindow()
             end)
 
             local blockLbl=f:CreateFontString(nil,"OVERLAY","GameFontNormal")
-            blockLbl:SetPoint("TOPLEFT",f,"TOPLEFT",280,-354)
+            blockLbl:SetPoint("TOPLEFT",f,"TOPLEFT",280,-378)
             blockLbl:SetText("Block phrases:")
             local blockEB=CreateFrame("EditBox",nil,f,"InputBoxTemplate")
             blockEB:SetSize(240,24)

@@ -269,12 +269,14 @@ MTR.DEFAULTS = {
         -- All alerts off by default — nothing fires until user explicitly opts in
         textAlertMsLeveling   = false,
         textAlertMsGold       = false,
+        textAlertMplus        = false,
         textAlertBc           = false,
         textAlertLfmDps       = false,
         textAlertLfmTank      = false,
         textAlertLfmHeal      = false,
         alertMsLeveling       = false,
         alertMsGold           = false,
+        alertMplus            = false,
         alertBc               = false,
         alertLfmDps           = false,
         alertLfmTank          = false,
@@ -870,12 +872,14 @@ function MTR.InitDB()
                 -- Wipe all alert keys so defaults (false) apply fresh
                 gr.textAlertMsLeveling = nil
                 gr.textAlertMsGold     = nil
+                gr.textAlertMplus      = nil
                 gr.textAlertBc         = nil
                 gr.textAlertLfmDps     = nil
                 gr.textAlertLfmTank    = nil
                 gr.textAlertLfmHeal    = nil
                 gr.alertMsLeveling     = nil
                 gr.alertMsGold         = nil
+                gr.alertMplus          = nil
                 gr.alertBc             = nil
                 gr.alertLfmDps         = nil
                 gr.alertLfmTank        = nil
@@ -1016,8 +1020,17 @@ function MTR.GetOfficerRankSuggestions()
                         -- Unused: gchat_l, gchat_s, edit_pnote, unknown_flag, withdraw_repair
                         if score >= 5 then
                             suggested[NormalizeRankName(info.name)] = true
-                        end
-                    end
+    end
+
+    -- Migration: ensure M+ alert keys exist for profiles created before the M+/BC split
+    for _, profile in pairs(MekTownRecruitDB.profiles) do
+        if type(profile.groupRadarConfig) == "table" then
+            local gr = profile.groupRadarConfig
+            if gr.alertMplus == nil then gr.alertMplus = false end
+            if gr.textAlertMplus == nil then gr.textAlertMplus = false end
+        end
+    end
+end
                 end
             end
         end

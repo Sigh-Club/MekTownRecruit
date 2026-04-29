@@ -23,6 +23,16 @@ MTR.GroupRadar = GR
 GR.patterns = {
     msLevelingPatterns = {"ms.*lvl","ms.*level","ms.*aura","mana.*lvl","mana.*level"},
     msGoldPatterns     = {"ms.*gold","lf.*gold","mana.*gold"},
+    -- Mythic+ / Keystone patterns — matches any M+ or keystone run (with or without BC).
+    -- This is separate from BC-specific patterns so users can toggle M+ and BC independently.
+    mplusPatterns = {
+        "lf.*keystone","lf.*m%+","lf.*mythic",
+        "keystone.*%d+","m%+.*%d+",
+        "need.*keystone","need.*m%+",
+        "keystone.*lf","m%+.*lf","mythic.*lf",
+        "m%+.*%d+%).*lf","lf.*%d+%).*m%+",
+        "%d+%).*keystone","keystone.*%d+%).*lf",
+    },
     -- Bonus Coins (BC) patterns — matches groups specifically advertising BC runs.
     -- A message must contain a BC indicator AND NOT contain a no-BC indicator.
     -- The no-BC check is done in HandleChatMessage before this pattern fires.
@@ -66,10 +76,12 @@ GR.memberRecommendedConfig = {
     textAlertLfmHeal  = true,
     alertMsGold       = false,
     alertMsLeveling   = false,
+    alertMplus        = false,
     alertBc           = false,
-    textAlertMsGold   = false,
+    textAlertMsGold     = false,
     textAlertMsLeveling = false,
-    textAlertBc       = false,
+    textAlertMplus      = false,
+    textAlertBc         = false,
     doNotAlertInGroup = false,
     doNotAlertInCombat = false,
     dontAlertInInstance = false,
@@ -89,8 +101,10 @@ GR.defaultConfig = {
     -- User must explicitly check each box to enable what they want.
     alertMsLeveling       = false,
     alertMsGold           = false,
+    alertMplus            = false,
     alertBc               = false,
     textAlertBc           = false,
+    textAlertMplus        = false,
     alertLfmDps           = false,
     alertLfmTank          = false,
     alertLfmHeal          = false,
@@ -141,6 +155,7 @@ GR.activeSearches        = {}
 GR.activeMsLevelSearches = {}
 GR.activeMsGoldSearches  = {}
 GR.activeBcSearches      = {}   -- Bonus Coins runs
+GR.activeMplusSearches   = {}   -- Mythic+ / Keystone runs
 GR.activeLfmDpsSearches  = {}
 GR.activeLfmTankSearches = {}
 GR.activeLfmHealSearches = {}
@@ -256,6 +271,7 @@ local function CleanupActiveSearches()
     clean(GR.activeMsLevelSearches)
     clean(GR.activeMsGoldSearches)
     clean(GR.activeBcSearches)
+    clean(GR.activeMplusSearches)
     clean(GR.activeLfmDpsSearches)
     clean(GR.activeLfmTankSearches)
     clean(GR.activeLfmHealSearches)
@@ -453,11 +469,13 @@ local function HandleChatMessage(event, message, sender)
     end
 
     -- Pattern matching (identical to RR2 WA logic)
-    local msMsLeveling,matchesMsGold,matchesBc=false,false,false
+    local msMsLeveling,matchesMsGold,matchesBc,matchesMplus=false,false,false,false
     local matchesLfmDps,matchesLfmTank,matchesLfmHeal=false,false,false
 
     for _,p in ipairs(GR.patterns.msLevelingPatterns) do if msgLow:match(p) then msMsLeveling=true break end end
     for _,p in ipairs(GR.patterns.msGoldPatterns)     do if msgLow:match(p) then matchesMsGold=true break end end
+    -- M+ / Keystone: matches any Mythic+ or keystone run (with or without BC)
+    for _,p in ipairs(GR.patterns.mplusPatterns) do if msgLow:match(p) then matchesMplus=true break end end
     -- BC: must match a BC pattern AND must NOT match any no-BC phrase
     do
         local hasBC = false
@@ -473,7 +491,7 @@ local function HandleChatMessage(event, message, sender)
     for _,p in ipairs(GR.patterns.lfmHealPatterns)    do if msgLow:match(p) then matchesLfmHeal=true break end end
 
     if not matchesLfmHeal and not matchesLfmTank and not matchesLfmDps
-       and not msMsLeveling and not matchesMsGold then
+       and not msMsLeveling and not matchesMsGold and not matchesMplus then
         for _,p in ipairs(GR.patterns.lfmAllPatterns) do
             if msgLow:match(p) then
                 matchesLfmDps=true matchesLfmTank=true matchesLfmHeal=true break
@@ -481,13 +499,14 @@ local function HandleChatMessage(event, message, sender)
         end
     end
 
-    local anyMatch = msMsLeveling or matchesMsGold or matchesBc or matchesLfmDps or matchesLfmTank or matchesLfmHeal
+    local anyMatch = msMsLeveling or matchesMsGold or matchesMplus or matchesBc or matchesLfmDps or matchesLfmTank or matchesLfmHeal
     if not anyMatch then FeedPush(sender,message,"noMatch","") return end
 
     -- Record in buckets
     RecordActiveSearch(sender,message,GR.activeSearches)
     if msMsLeveling then RecordActiveSearch(sender,message,GR.activeMsLevelSearches) end
     if matchesMsGold then RecordActiveSearch(sender,message,GR.activeMsGoldSearches) end
+    if matchesMplus  then RecordActiveSearch(sender,message,GR.activeMplusSearches)  end
     if matchesBc     then RecordActiveSearch(sender,message,GR.activeBcSearches)     end
     if matchesLfmDps  and not(msMsLeveling or matchesMsGold) then RecordActiveSearch(sender,message,GR.activeLfmDpsSearches)  end
     if matchesLfmTank and not(msMsLeveling or matchesMsGold) then RecordActiveSearch(sender,message,GR.activeLfmTankSearches) end
@@ -497,6 +516,7 @@ local function HandleChatMessage(event, message, sender)
     if matchesLfmDps  and not(msMsLeveling or matchesMsGold) then cats[#cats+1]="|cffffaa00DPS|r"     end
     if matchesLfmTank and not(msMsLeveling or matchesMsGold) then cats[#cats+1]="|cffffaa00Tank|r"    end
     if matchesLfmHeal and not(msMsLeveling or matchesMsGold) then cats[#cats+1]="|cffffaa00Heal|r"    end
+    if matchesMplus  then cats[#cats+1]="|cffcc66ffM+|r"       end
     if matchesBc     then cats[#cats+1]="|cff00ccffBC|r"       end
     if msMsLeveling  then cats[#cats+1]="|cff88ccffMS-Lvl|r"  end
     if matchesMsGold then cats[#cats+1]="|cffddcc00MS-Gold|r" end
@@ -511,6 +531,7 @@ local function HandleChatMessage(event, message, sender)
     local textOk =
         (cfg.textAlertMsLeveling and msMsLeveling) or
         (cfg.textAlertMsGold     and matchesMsGold) or
+        (cfg.textAlertMplus     and matchesMplus) or
         (cfg.textAlertBc         and matchesBc) or
         (cfg.textAlertLfmDps  and matchesLfmDps  and not(msMsLeveling or matchesMsGold)) or
         (cfg.textAlertLfmTank and matchesLfmTank and not(msMsLeveling or matchesMsGold)) or
@@ -522,6 +543,7 @@ local function HandleChatMessage(event, message, sender)
     local popOk =
         (cfg.alertMsLeveling and msMsLeveling) or
         (cfg.alertMsGold     and matchesMsGold) or
+        (cfg.alertMplus     and matchesMplus) or
         (cfg.alertBc         and matchesBc) or
         (cfg.alertLfmDps  and matchesLfmDps  and not(msMsLeveling or matchesMsGold)) or
         (cfg.alertLfmTank and matchesLfmTank and not(msMsLeveling or matchesMsGold)) or
@@ -548,6 +570,8 @@ local tabDefs = {
     {label="All",      group=function() return GR.activeSearches        end},
     {label="MS Level", group=function() return GR.activeMsLevelSearches end},
     {label="MS Gold",  group=function() return GR.activeMsGoldSearches  end},
+    {label="M+",       group=function() return GR.activeMplusSearches   end},
+    {label="BC",       group=function() return GR.activeBcSearches       end},
     {label="LF DPS",   group=function() return GR.activeLfmDpsSearches  end},
     {label="LF Tank",  group=function() return GR.activeLfmTankSearches end},
     {label="LF Heal",  group=function() return GR.activeLfmHealSearches end},
