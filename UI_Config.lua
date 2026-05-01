@@ -198,6 +198,54 @@ local function CreateMainWindow()
     closeBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", 2, 2)
     closeBtn:SetScript("OnClick", function() mainWin:Hide() end)
 
+    -- Minimize button (next to close)
+    mainWin._minimized = false
+    mainWin._fullHeight = 680
+    local minBtn = CreateFrame("Button", nil, mainWin, "UIPanelButtonTemplate")
+    minBtn:SetSize(20, 20)
+    minBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", -30, 2)
+    minBtn:SetText("_")
+    minBtn:SetScript("OnClick", function()
+        if not mainWin._minimized then
+            mainWin._fullHeight = mainWin:GetHeight()
+            mainWin._savedChildren = {}
+            for i = 1, mainWin:GetNumChildren() do
+                local child = select(i, mainWin:GetChildren())
+                if child ~= minBtn and child ~= closeBtn and child:IsShown() then
+                    mainWin._savedChildren[#mainWin._savedChildren + 1] = child
+                    child:Hide()
+                end
+            end
+            for i = 1, mainWin:GetNumRegions() do
+                local region = select(i, mainWin:GetRegions())
+                if region ~= titleText and region:IsShown() then
+                    if region:GetDrawLayer() ~= "OVERLAY" then
+                        region:Hide()
+                    end
+                end
+            end
+            mainWin:SetHeight(30)
+            mainWin._minimized = true
+            minBtn:SetText("+")
+        else
+            mainWin:SetHeight(mainWin._fullHeight)
+            mainWin._minimized = false
+            minBtn:SetText("_")
+            if mainWin._savedChildren then
+                for _, child in ipairs(mainWin._savedChildren) do
+                    child:Show()
+                end
+            end
+            for i = 1, mainWin:GetNumRegions() do
+                local region = select(i, mainWin:GetRegions())
+                if region:IsObjectType("Texture") and not region:IsShown() then
+                    region:Show()
+                end
+            end
+            if mainWin.Refresh then mainWin:Refresh() end
+        end
+    end)
+
     -- Store profile widget references (populated inside Profile tab builder)
     mainWin._profDD   = nil
     mainWin._profNew  = nil
@@ -1044,6 +1092,20 @@ local function CreateMainWindow()
         end
 
         AddHeader("|cffff2020Guild Settings|r", "Guild invite, messaging, and automation controls. This tab is rebuilt as a contained left-aligned scroll layout with direct profile-backed saves.")
+
+        local gbBtn = MakeBTStd(content, "Open Guild Bank", "MD")
+        gbBtn:SetPoint("TOPRIGHT", content, "TOPRIGHT", -12, y + 10)
+        gbBtn:SetScript("OnClick", function()
+            if mainWin and not mainWin._minimized then
+                local minBtn = nil
+                for i = 1, mainWin:GetNumChildren() do
+                    local child = select(i, mainWin:GetChildren())
+                    if child:GetText and child:GetText() == "_" then minBtn = child break end
+                end
+                if minBtn then minBtn:Click() end
+            end
+            if MTR.OpenCharVaultToTab then MTR.OpenCharVaultToTab("Guild Bank") end
+        end)
 
         local guildFmtHint = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         guildFmtHint:SetPoint("TOPLEFT", content, "TOPLEFT", LEFT, y)
@@ -2305,6 +2367,15 @@ function MTR.OpenConfig()
     end
 
     CreateMainWindow()
+    if mainWin._minimized then
+        local minBtn = nil
+        for i = 1, mainWin:GetNumChildren() do
+            local child = select(i, mainWin:GetChildren())
+            if child:GetText and child:GetText() == "+" then minBtn = child break end
+        end
+        if minBtn then minBtn:Click() end
+        return
+    end
     if mainWin:IsShown() then mainWin:Hide() return end
     mainWin._originalConfig = MTR.DeepCopy(MTR.db or {})
     mainWin._dirty = false
@@ -2313,7 +2384,14 @@ function MTR.OpenConfig()
 
     if mainWin._updateTabAccess then mainWin._updateTabAccess() end
 
-    if MTR.vaultWin and MTR.vaultWin:IsShown() then MTR.vaultWin:Hide() end
+    if MTR.vaultWin and MTR.vaultWin:IsShown() and not MTR.vaultWin._minimized then
+        local vMinBtn = nil
+        for i = 1, MTR.vaultWin:GetNumChildren() do
+            local child = select(i, MTR.vaultWin:GetChildren())
+            if child:GetText and child:GetText() == "_" then vMinBtn = child break end
+        end
+        if vMinBtn then vMinBtn:Click() end
+    end
 
     if mainWin._showWS then
         if (MTR.CanAccess and MTR.CanAccess("Recruit")) then

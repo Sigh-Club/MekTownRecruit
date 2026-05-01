@@ -1465,7 +1465,16 @@ function MTR.OpenCharVaultToTab(tabName)
     if not vaultWin then
         MTR.OpenCharVault()
     else
-        if not vaultWin:IsShown() then vaultWin:Show() end
+        if vaultWin._minimized then
+            local vMinBtn = nil
+            for i = 1, vaultWin:GetNumChildren() do
+                local child = select(i, vaultWin:GetChildren())
+                if child:GetText and child:GetText() == "+" then vMinBtn = child break end
+            end
+            if vMinBtn then vMinBtn:Click() end
+        elseif not vaultWin:IsShown() then
+            vaultWin:Show()
+        end
     end
     if vaultWin and vaultWin._showTab then
         vaultWin._showTab(tabName or "Overview")
@@ -1503,11 +1512,57 @@ function MTR.OpenCharVault()
         xBtn:SetPoint("TOPRIGHT",vaultWin,"TOPRIGHT",-4,-4)
         xBtn:SetScript("OnClick",function() vaultWin:Hide() end)
 
+        vaultWin._minimized = false
+        vaultWin._fullHeight = VAULT_H
+        local vMinBtn = CreateFrame("Button", nil, vaultWin, "UIPanelButtonTemplate")
+        vMinBtn:SetSize(20, 20)
+        vMinBtn:SetPoint("TOPRIGHT", vaultWin, "TOPRIGHT", -36, -6)
+        vMinBtn:SetText("_")
+        vMinBtn:SetScript("OnClick", function()
+            if not vaultWin._minimized then
+                vaultWin._fullHeight = vaultWin:GetHeight()
+                vaultWin._savedChildren = {}
+                for i = 1, vaultWin:GetNumChildren() do
+                    local child = select(i, vaultWin:GetChildren())
+                    if child ~= vMinBtn and child ~= xBtn and child ~= backBtn and child:IsShown() then
+                        vaultWin._savedChildren[#vaultWin._savedChildren + 1] = child
+                        child:Hide()
+                    end
+                end
+                for i = 1, vaultWin:GetNumRegions() do
+                    local region = select(i, vaultWin:GetRegions())
+                    if region ~= hdr and region:IsShown() then
+                        if region:GetDrawLayer() ~= "OVERLAY" then
+                            region:Hide()
+                        end
+                    end
+                end
+                vaultWin:SetHeight(30)
+                vaultWin._minimized = true
+                vMinBtn:SetText("+")
+            else
+                vaultWin:SetHeight(vaultWin._fullHeight)
+                vaultWin._minimized = false
+                vMinBtn:SetText("_")
+                if vaultWin._savedChildren then
+                    for _, child in ipairs(vaultWin._savedChildren) do
+                        child:Show()
+                    end
+                end
+                for i = 1, vaultWin:GetNumRegions() do
+                    local region = select(i, vaultWin:GetRegions())
+                    if region:IsObjectType("Texture") and not region:IsShown() then
+                        region:Show()
+                    end
+                end
+            end
+        end)
+
         -- Back to Config button — closes vault and reopens the config window
         local backBtn=CreateFrame("Button",nil,vaultWin,"UIPanelButtonTemplate")
         SetStdButtonSize(backBtn, "MD")
-        backBtn:SetPoint("TOPRIGHT",vaultWin,"TOPRIGHT",-44,-6)
-        backBtn:SetText("|cffaaaaaaBack to Config|r")
+        backBtn:SetPoint("TOPRIGHT",vaultWin,"TOPRIGHT",-60,-6)
+        backBtn:SetText("|cffaaaaaaBack|r")
         backBtn:SetScript("OnClick",function()
             vaultWin:Hide()
             if MTR.OpenConfig then MTR.OpenConfig() end
@@ -1641,6 +1696,15 @@ function MTR.OpenCharVault()
         MTR.vaultWin=vaultWin
     end
 
+    if vaultWin._minimized then
+        local vMinBtn = nil
+        for i = 1, vaultWin:GetNumChildren() do
+            local child = select(i, vaultWin:GetChildren())
+            if child:GetText and child:GetText() == "+" then vMinBtn = child break end
+        end
+        if vMinBtn then vMinBtn:Click() end
+        return
+    end
     if vaultWin:IsShown() then vaultWin:Hide() return end
     vaultWin:Show()
     vaultWin._showTab("Overview")

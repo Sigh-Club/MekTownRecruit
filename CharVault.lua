@@ -537,8 +537,6 @@ local function DoGuildBankScan(opts)
         if numTabsReady <= 0 and retry < 3 then
             local nextOpts = {
                 includeLedger = includeLedger,
-                interactiveSweep = opts.interactiveSweep == true,
-                endAtTab1 = opts.endAtTab1 == true,
                 _retry = retry + 1,
             }
             DoGuildBankScan(nextOpts)
@@ -552,7 +550,7 @@ local function DoGuildBankScan(opts)
         MergeGuildBankSnapshot(items, scannedBy, ts)
         local sent = BroadcastGuildBank(items, scannedBy)
         if includeLedger and MTR.GuildBankLedger and MTR.GuildBankLedger.BeginLocalScan then
-            MTR.GuildBankLedger.BeginLocalScan(scannedBy, { forceBroadcast = true, interactiveSweep = (opts.interactiveSweep == true) })
+            MTR.GuildBankLedger.BeginLocalScan(scannedBy, { forceBroadcast = true })
         end
 
         local numTabs = GetNumGuildBankTabs and GetNumGuildBankTabs() or 0
@@ -567,7 +565,7 @@ local function DoGuildBankScan(opts)
     end)
 end
 MTR.GuildBankScan.DoScan = function()
-    DoGuildBankScan({ includeLedger = true, interactiveSweep = true })
+    DoGuildBankScan({ includeLedger = true })
 end   -- expose to UI
 
 -- ── Event listeners ────────────────────────────────────────────────────────
@@ -582,23 +580,11 @@ gbScanFrame:SetScript("OnEvent", function(self, event)
     if not MTR.initialized then return end
     if event == "GUILDBANKFRAME_OPENED" then
         gbOpenedAt = time()
-        DoGuildBankScan({ includeLedger = true, interactiveSweep = true, endAtTab1 = true })
-        MTR.TickAdd("gb_open_rescan_1", 1.5, function()
-            MTR.TickRemove("gb_open_rescan_1")
-            if GuildBankFrame and GuildBankFrame:IsShown() then
-                DoGuildBankScan({ includeLedger = true, interactiveSweep = true, endAtTab1 = true })
-            end
-        end)
-        MTR.TickAdd("gb_open_rescan_2", 3.0, function()
-            MTR.TickRemove("gb_open_rescan_2")
-            if GuildBankFrame and GuildBankFrame:IsShown() then
-                DoGuildBankScan({ includeLedger = true, interactiveSweep = true, endAtTab1 = true })
-            end
-        end)
+        DoGuildBankScan({ includeLedger = true })
         return
     end
 
-    -- Avoid replacing the open-event interactive sweep with a plain bag scan.
+    -- Avoid replacing the open-event scan with a plain bag scan.
     if (time() - (gbOpenedAt or 0)) < 4 then return end
     DoGuildBankScan({ includeLedger = false })
 end)
@@ -1463,160 +1449,7 @@ local gblScanState = {
     entries = nil,
     waitingTab = nil,
     forceBroadcast = false,
-    interactiveSweep = false,
-    endAtTab1 = false,
-    origMode = nil,
-    origTab = nil,
 }
-
-local function GBL_AgeTextToEpoch(ageText, baseEpoch)
-    local derived = GBL_DeriveEpochFromRelative(ageText, baseEpoch)
-    return tonumber(derived) or 0
-end
-
-local function GBL_ParseTextLogMessage(tab, rawMsg, scanBy)
-    if type(rawMsg) ~= "string" or rawMsg == "" then return nil end
-
-    local itemLink = rawMsg:match("(|Hitem:[^|]+|h%[[^%]]+%]|h)")
-    local itemName = rawMsg:match("|Hitem:[^|]+|h%[([^%]]+)%]|h") or rawMsg:match("%[([^%]]+)%]")
-    local itemID = itemLink and tonumber(itemLink:match("item:(%d+)")) or nil
-
-    local plain = rawMsg
-    plain = plain:gsub("|c%x%x%x%x%x%x%x%x", "")
-    plain = plain:gsub("|r", "")
-    plain = plain:gsub("|H.-|h(.-)|h", "%1")
-    plain = plain:gsub("|T.-|t", "")
-    plain = plain:gsub("%s+", " ")
-    plain = plain:gsub("^%s+", ""):gsub("%s+$", "")
-
-    local actor, txType
-    actor = plain:match("^(.-) deposited ")
-    if actor then
-        txType = "deposit"
-    else
-        actor = plain:match("^(.-) withdrew ")
-        if actor then
-            txType = "withdraw"
-        else
-            actor = plain:match("^(.-) moved ")
-            if actor then
-                txType = "move"
-            end
-        end
-    end
-    if not actor or not txType then return nil end
-
-    local count = tonumber(plain:match("%]x%s*(%d+)")) or tonumber(plain:match(" x%s*(%d+)")) or 1
-    local ageText = plain:match("%((.-)%)%s*$") or ""
-    ageText = ageText:gsub("^%s+", ""):gsub("%s+$", "")
-
-    local e = {
-        kind = "item",
-        txType = txType,
-        actor = actor or "?",
-        itemID = itemID,
-        itemLink = itemLink,
-        itemName = itemName or "Unknown",
-        count = count,
-        tab1 = tonumber(tab) or 0,
-        tab2 = 0,
-        year = 0,
-        month = 0,
-        day = 0,
-        hour = 0,
-        scanBy = scanBy or MTR.playerName or "?",
-        scanTS = date("%Y-%m-%d %H:%M"),
-        scanEpoch = time(),
-        source = "textlog",
-        relativeText = ageText,
-    }
-    e.epoch = GBL_AgeTextToEpoch(ageText, e.scanEpoch)
-    GBL_EnsureCanonicalTime(e)
-    if e.epoch > 0 then
-        e.dateText = date("%d/%m/%Y %H:%M", GBL_EffectiveEpoch(e))
-    else
-        e.dateText = ageText ~= "" and ageText or "Unknown (game log timestamp unavailable)"
-    end
-    GBL_EnsureTxId(e)
-    e.fingerprint = table.concat({
-        e.txType or "?",
-        e.actor or "?",
-        tostring(e.itemID or 0),
-        e.itemName or "?",
-        tostring(e.count or 0),
-        tostring(e.tab1 or 0),
-        e.dateText or "",
-    }, "|")
-    return e
-end
-
-local function GBL_ScrapeVisibleLogFrame(tab, entries, scanBy)
-    if not GuildBankMessageFrame then
-        GBL_Debug("Tab " .. tostring(tab) .. " scrape: GuildBankMessageFrame missing")
-        return 0
-    end
-
-    local added = 0
-    local seen = {}
-
-    GBL_Debug("Tab " .. tostring(tab) .. " scrape: frame present, mode=" .. tostring(GuildBankFrame and GuildBankFrame.mode or "nil"))
-
-    if GuildBankFrame_UpdateLog then
-        local ok = pcall(GuildBankFrame_UpdateLog)
-        GBL_Debug("Tab " .. tostring(tab) .. " scrape: GuildBankFrame_UpdateLog() -> " .. tostring(ok))
-    end
-
-    if GuildBankMessageFrame.GetNumMessages and GuildBankMessageFrame.GetMessageInfo then
-        local okN, n = pcall(GuildBankMessageFrame.GetNumMessages, GuildBankMessageFrame)
-        GBL_Debug("Tab " .. tostring(tab) .. " scrape: GetNumMessages ok=" .. tostring(okN) .. " count=" .. tostring(n))
-        if okN and type(n) == "number" and n > 0 then
-            for i = 1, n do
-                local okM, msg = pcall(GuildBankMessageFrame.GetMessageInfo, GuildBankMessageFrame, i)
-                if i <= 3 then
-                    GBL_Debug("Tab " .. tostring(tab) .. " scrape msg[" .. i .. "] ok=" .. tostring(okM) .. " text=" .. tostring(msg))
-                end
-                if okM and type(msg) == "string" and msg ~= "" and not seen[msg] then
-                    seen[msg] = true
-                    local e = GBL_ParseTextLogMessage(tab, msg, scanBy)
-                    if e then
-                        entries[#entries + 1] = e
-                        added = added + 1
-                    end
-                end
-            end
-        end
-    else
-        GBL_Debug("Tab " .. tostring(tab) .. " scrape: message methods unavailable")
-    end
-
-    if added == 0 and GuildBankMessageFrame.GetRegions then
-        local regions = { GuildBankMessageFrame:GetRegions() }
-        GBL_Debug("Tab " .. tostring(tab) .. " scrape: regions=" .. tostring(#regions))
-        local samples = 0
-        for _, region in ipairs(regions) do
-            if region and region.GetObjectType and region:GetObjectType() == "FontString" and region.GetText then
-                local msg = region:GetText()
-                if type(msg) == "string" and msg ~= "" then
-                    samples = samples + 1
-                    if samples <= 5 then
-                        GBL_Debug("Tab " .. tostring(tab) .. " region text[" .. samples .. "]=" .. tostring(msg))
-                    end
-                end
-                if type(msg) == "string" and msg ~= "" and not seen[msg] then
-                    seen[msg] = true
-                    local e = GBL_ParseTextLogMessage(tab, msg, scanBy)
-                    if e then
-                        entries[#entries + 1] = e
-                        added = added + 1
-                    end
-                end
-            end
-        end
-    end
-
-    GBL_Debug("Tab " .. tostring(tab) .. " scrape: parsed entries added=" .. tostring(added))
-    return added
-end
 
 local function GBL_ReadTabTransactions(tab, entries, scanBy)
     local count = 0
@@ -1680,20 +1513,8 @@ local function GBL_ReadTabTransactions(tab, entries, scanBy)
 
     GBL_Debug("Tab " .. tostring(tab) .. " API entries added=" .. tostring(#entries - before))
 
-    if gblScanState and gblScanState.interactiveSweep then
-        local beforeScrape = #entries
-        local scraped = GBL_ScrapeVisibleLogFrame(tab, entries, scanBy)
-        GBL_Debug("Tab " .. tostring(tab) .. " interactive scrape added=" .. tostring((#entries - beforeScrape)) .. " raw=" .. tostring(scraped or 0))
-    end
-
     if #entries == before then
-        local canScrapeVisible = (GuildBankFrame and GuildBankFrame.mode == "log") and (GetCurrentGuildBankTab and (tonumber(GetCurrentGuildBankTab()) or 0) == tonumber(tab))
-        if canScrapeVisible then
-            GBL_Debug("Tab " .. tostring(tab) .. " API returned no entries; using visible log text fallback")
-            GBL_ScrapeVisibleLogFrame(tab, entries, scanBy)
-        else
-            GBL_Debug("Tab " .. tostring(tab) .. " API returned no entries; passive mode (no visible fallback)")
-        end
+        GBL_Debug("Tab " .. tostring(tab) .. " API returned no entries")
     end
 end
 
@@ -1751,49 +1572,12 @@ local function GBL_ReadMoneyTransactions(entries, scanBy)
     end
 end
 
-local function GBL_RestoreGuildBankView(endAtTab1, origMode, origTab)
-    if not (GuildBankFrame and GuildBankFrame:IsShown()) then return end
-
-    local targetMode = endAtTab1 and "bank" or (origMode or "bank")
-    local targetTab = endAtTab1 and 1 or (tonumber(origTab) or 1)
-    if targetTab <= 0 then targetTab = 1 end
-
-    local function applyNow()
-        if not (GuildBankFrame and GuildBankFrame:IsShown()) then return end
-
-        GuildBankFrame.mode = targetMode
-        if targetMode == "bank" and SetCurrentGuildBankTab then
-            pcall(SetCurrentGuildBankTab, targetTab)
-        end
-
-        if GuildBankFrame_Update then
-            pcall(GuildBankFrame_Update)
-        end
-    end
-
-    MTR.TickRemove("gb_restore_view_1")
-    MTR.TickRemove("gb_restore_view_2")
-    applyNow()
-    MTR.TickAdd("gb_restore_view_1", 0.25, function()
-        MTR.TickRemove("gb_restore_view_1")
-        applyNow()
-    end)
-    MTR.TickAdd("gb_restore_view_2", 0.75, function()
-        MTR.TickRemove("gb_restore_view_2")
-        applyNow()
-    end)
-end
-
 local function GBL_FinalizeScan()
     local entries = gblScanState.entries or {}
     local scanBy = gblScanState.scanBy or MTR.playerName or "?"
     gblScanState.active = false
     gblScanState.waitingTab = nil
     MTR.TickRemove("gb_ledger_timeout")
-
-    if gblScanState.interactiveSweep then
-        GBL_RestoreGuildBankView(gblScanState.endAtTab1, gblScanState.origMode, gblScanState.origTab)
-    end
 
     local added, updated = GBL_MergeEntries(entries, scanBy, date("%Y-%m-%d %H:%M"))
     local db = GBL_DB()
@@ -1813,10 +1597,6 @@ local function GBL_FinalizeScan()
         end
     end
     gblScanState.forceBroadcast = false
-    gblScanState.interactiveSweep = false
-    gblScanState.endAtTab1 = false
-    gblScanState.origMode = nil
-    gblScanState.origTab = nil
 end
 
 local function GBL_QueryNextTab()
@@ -1832,11 +1612,6 @@ local function GBL_QueryNextTab()
 
     gblScanState.waitingTab = tab
     GBL_Debug("Queue tab " .. tostring(tab) .. " of " .. tostring(gblScanState.tabs and #gblScanState.tabs or 0))
-
-    if gblScanState.interactiveSweep then
-        if SetCurrentGuildBankTab then pcall(SetCurrentGuildBankTab, tab) end
-        if GuildBankFrame then GuildBankFrame.mode = "log" end
-    end
 
     if QueryGuildBankLog then
         local ok, err = pcall(QueryGuildBankLog, tab)
@@ -1876,10 +1651,6 @@ local function GBL_CollectTransactions(scanBy, opts)
     gblScanState.entries = {}
     gblScanState.waitingTab = nil
     gblScanState.forceBroadcast = (opts.forceBroadcast == true)
-    gblScanState.interactiveSweep = (opts.interactiveSweep == true)
-    gblScanState.endAtTab1 = (opts.endAtTab1 == true)
-    gblScanState.origMode = (GuildBankFrame and GuildBankFrame.mode) or nil
-    gblScanState.origTab = (GetCurrentGuildBankTab and tonumber(GetCurrentGuildBankTab()) or 0)
 
     for tab = 1, numTabs do
         gblScanState.tabs[#gblScanState.tabs + 1] = tab
@@ -1896,19 +1667,6 @@ gblScanFrame:RegisterEvent("GUILDBANKLOG_UPDATE")
 gblScanFrame:SetScript("OnEvent", function(_, event)
     GBL_Debug("Event fired: " .. tostring(event) .. " waitingTab=" .. tostring(gblScanState.waitingTab))
     if not gblScanState.active then
-        local canCapture = GuildBankFrame and GuildBankFrame:IsShown() and GuildBankFrame.mode == "log" and GetCurrentGuildBankTab
-        if canCapture then
-            local tab = tonumber(GetCurrentGuildBankTab()) or 0
-            if tab > 0 then
-                local temp = {}
-                local addedRaw = GBL_ScrapeVisibleLogFrame(tab, temp, MTR.playerName or "?")
-                local merged = GBL_MergeEntries(temp, MTR.playerName or "?", date("%Y-%m-%d %H:%M"))
-                if merged > 0 then
-                    GBL_Broadcast(GBL_DB().entries, "passive-log")
-                end
-                GBL_Debug("Passive visible-log capture tab=" .. tostring(tab) .. " raw=" .. tostring(addedRaw) .. " merged=" .. tostring(merged))
-            end
-        end
         return
     end
     local tab = gblScanState.waitingTab
