@@ -200,7 +200,10 @@ function MTR.OpenMemberWindow()
                 end
             end
 
-            ApplyRecommendedMemberRadarDefaults(false)
+            -- REMOVED: Auto-apply preset on every settings open. Users must click
+            -- "Use LFG Defaults" to opt in. This prevents silent re-enabling of
+            -- alerts after the config migration wipe.
+            -- ApplyRecommendedMemberRadarDefaults(false)
 
             if memberWin._grSettingsFrame then
                 if memberWin._grSettingsFrame:IsShown() then

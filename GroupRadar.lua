@@ -91,6 +91,7 @@ GR.memberRecommendedConfig = {
 }
 
 GR.defaultConfig = {
+    _grMigrationVersion = 1,
     -- Text alerts (chat line) — ALL false. Nothing printed to chat until opted in.
     textAlertMsLeveling   = false,
     textAlertMsGold       = false,

@@ -266,6 +266,7 @@ MTR.DEFAULTS = {
 
     -- Group Radar (mirrors RecruitRadar 2 WA defaults)
     groupRadarConfig = {
+        _grMigrationVersion = 1,
         -- All alerts off by default — nothing fires until user explicitly opts in
         textAlertMsLeveling   = false,
         textAlertMsGold       = false,
@@ -861,14 +862,16 @@ function MTR.InitDB()
     -- Migration: clear any stale alert values from pre-8.0 saves so the user
     -- starts clean and can opt in to exactly what they want.
     -- We nil out all alert/text keys so the defaults (all false) take effect.
+    -- ONE-TIME ONLY: only runs if _grMigrationVersion is missing.
     for _, profile in pairs(MekTownRecruitDB.profiles) do
         if type(profile.groupRadarConfig) == "table" then
             local gr = profile.groupRadarConfig
             -- Only wipe if this looks like a pre-8.0 config (had true values)
-            -- Check for the old default: alertLfmDps was true in v7 and earlier
-            if gr.alertLfmDps == true or gr.alertLfmTank == true or gr.alertLfmHeal == true
+            -- AND _grMigrationVersion is missing (one-time migration)
+            if gr._grMigrationVersion == nil and (
+               gr.alertLfmDps == true or gr.alertLfmTank == true or gr.alertLfmHeal == true
                or gr.alertMsLeveling == true or gr.alertMsGold == true
-               or gr.textAlertLfmDps == true or gr.textAlertLfmTank == true or gr.textAlertLfmHeal == true then
+               or gr.textAlertLfmDps == true or gr.textAlertLfmTank == true or gr.textAlertLfmHeal == true) then
                 -- Wipe all alert keys so defaults (false) apply fresh
                 gr.textAlertMsLeveling = nil
                 gr.textAlertMsGold     = nil
@@ -889,6 +892,8 @@ function MTR.InitDB()
                 gr.doNotAlertInGroup   = nil
                 gr.dontAlertInInstance = nil
             end
+            -- Mark migration as done so it never runs again for this profile
+            gr._grMigrationVersion = 1
         end
     end
 end
