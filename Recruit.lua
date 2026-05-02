@@ -342,7 +342,7 @@ function MTR.ShowRecruitPopup(sender, message)
 
     -- Close button (top-right)
     local xBtn = CreateFrame("Button", nil, f, "UIPanelCloseButton")
-    xBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -2)
+    xBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
     xBtn:SetScript("OnClick", function() f:Hide() end)
 
     -- Title bar (standard MekTown style)

@@ -195,7 +195,7 @@ local function CreateMainWindow()
 
     -- Close button (standard WoW X, top-right)
     local closeBtn = CreateFrame("Button", nil, mainWin, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", 2, 2)
+    closeBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", -4, -4)
     closeBtn:SetScript("OnClick", function() mainWin:Hide() end)
 
     -- Minimize button (next to close)
@@ -203,7 +203,7 @@ local function CreateMainWindow()
     mainWin._fullHeight = 680
     local minBtn = CreateFrame("Button", nil, mainWin, "UIPanelButtonTemplate")
     minBtn:SetSize(20, 20)
-    minBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", -30, 2)
+    minBtn:SetPoint("TOPRIGHT", mainWin, "TOPRIGHT", -40, -4)
     minBtn:SetText("_")
     minBtn:SetScript("OnClick", function()
         if not mainWin._minimized then

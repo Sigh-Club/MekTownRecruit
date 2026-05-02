@@ -18,6 +18,11 @@ local MTR = MekTownRecruit
 
 MTR.VERSION = "2.2.0"
 
+-- 3.3.5a compatibility shim — UnitIsGroupAssistant does not exist in WotLK
+UnitIsGroupAssistant = UnitIsGroupAssistant or function(unit)
+    return UnitIsRaidOfficer(unit) or false
+end
+
 
 -- ============================================================================
 -- CHAT / CHANNEL HELPERS

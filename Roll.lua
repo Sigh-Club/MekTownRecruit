@@ -237,7 +237,7 @@ local function RollShowFrame()
         end)
 
         local xBtn = CreateFrame("Button", nil, rollFrame, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", rollFrame, "TOPRIGHT", -2, -2)
+        xBtn:SetPoint("TOPRIGHT", rollFrame, "TOPRIGHT", -4, -4)
         xBtn:SetScript("OnClick", function() rollFrame:Hide() end)
 
         -- Auto-refresh + auto-declare on timer expiry

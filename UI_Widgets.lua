@@ -157,7 +157,7 @@ function MTR.OpenEditPopup(title, currentText, onSave)
         cancelBtn:SetScript("OnClick", function() editPopup:Hide() end)
 
         local xBtn = CreateFrame("Button", nil, editPopup, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", editPopup, "TOPRIGHT", -2, -2)
+        xBtn:SetPoint("TOPRIGHT", editPopup, "TOPRIGHT", -4, -4)
         xBtn:SetScript("OnClick", function() editPopup:Hide() end)
     end
 

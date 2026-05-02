@@ -221,7 +221,7 @@ local function AuctionShowFrame()
         end)
 
         local xBtn = CreateFrame("Button", nil, auctionFrame, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", auctionFrame, "TOPRIGHT", -2, -2)
+        xBtn:SetPoint("TOPRIGHT", auctionFrame, "TOPRIGHT", -4, -4)
         xBtn:SetScript("OnClick", function() auctionFrame:Hide() end)
 
         -- Auto-refresh + auto-close ticker

@@ -109,7 +109,7 @@ local function ShowLootPrompt(itemLink)
 
         -- X close
         local xBtn = CreateFrame("Button", nil, lootPrompt, "UIPanelCloseButton")
-        xBtn:SetPoint("TOPRIGHT", lootPrompt, "TOPRIGHT", -2, -2)
+        xBtn:SetPoint("TOPRIGHT", lootPrompt, "TOPRIGHT", -4, -4)
         xBtn:SetScript("OnClick", HideLootPrompt)
     end
 

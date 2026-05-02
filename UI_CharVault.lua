@@ -1519,7 +1519,7 @@ function MTR.OpenCharVault()
         vaultWin._fullHeight = VAULT_H
         local vMinBtn = CreateFrame("Button", nil, vaultWin, "UIPanelButtonTemplate")
         vMinBtn:SetSize(20, 20)
-        vMinBtn:SetPoint("TOPRIGHT", vaultWin, "TOPRIGHT", -36, -6)
+        vMinBtn:SetPoint("TOPRIGHT", vaultWin, "TOPRIGHT", -40, -4)
         vMinBtn:SetText("_")
         vMinBtn:SetScript("OnClick", function()
             if not vaultWin._minimized then
@@ -1564,7 +1564,7 @@ function MTR.OpenCharVault()
         -- Back to Config button — closes vault and reopens the config window
         local backBtn=CreateFrame("Button",nil,vaultWin,"UIPanelButtonTemplate")
         SetStdButtonSize(backBtn, "MD")
-        backBtn:SetPoint("TOPRIGHT",vaultWin,"TOPRIGHT",-60,-6)
+        backBtn:SetPoint("TOPRIGHT",vaultWin,"TOPRIGHT",-64,-4)
         backBtn:SetText("|cffaaaaaaBack|r")
         backBtn:SetScript("OnClick",function()
             vaultWin:Hide()
