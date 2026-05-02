@@ -1469,7 +1469,10 @@ function MTR.OpenCharVaultToTab(tabName)
             local vMinBtn = nil
             for i = 1, vaultWin:GetNumChildren() do
                 local child = select(i, vaultWin:GetChildren())
-                if child:GetText and child:GetText() == "+" then vMinBtn = child break end
+                if child.GetText then
+                    local t = child:GetText()
+                    if t and t == "+" then vMinBtn = child break end
+                end
             end
             if vMinBtn then vMinBtn:Click() end
         elseif not vaultWin:IsShown() then
@@ -1700,7 +1703,10 @@ function MTR.OpenCharVault()
         local vMinBtn = nil
         for i = 1, vaultWin:GetNumChildren() do
             local child = select(i, vaultWin:GetChildren())
-            if child:GetText and child:GetText() == "+" then vMinBtn = child break end
+            if child.GetText then
+                local t = child:GetText()
+                if t and t == "+" then vMinBtn = child break end
+            end
         end
         if vMinBtn then vMinBtn:Click() end
         return

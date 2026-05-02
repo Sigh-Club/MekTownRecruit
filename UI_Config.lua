@@ -1100,7 +1100,10 @@ local function CreateMainWindow()
                 local minBtn = nil
                 for i = 1, mainWin:GetNumChildren() do
                     local child = select(i, mainWin:GetChildren())
-                    if child:GetText and child:GetText() == "_" then minBtn = child break end
+                    if child.GetText then
+                        local t = child:GetText()
+                        if t and t == "_" then minBtn = child break end
+                    end
                 end
                 if minBtn then minBtn:Click() end
             end
@@ -2371,7 +2374,10 @@ function MTR.OpenConfig()
         local minBtn = nil
         for i = 1, mainWin:GetNumChildren() do
             local child = select(i, mainWin:GetChildren())
-            if child:GetText and child:GetText() == "+" then minBtn = child break end
+            if child.GetText then
+                local t = child:GetText()
+                if t and t == "+" then minBtn = child break end
+            end
         end
         if minBtn then minBtn:Click() end
         return
@@ -2388,7 +2394,10 @@ function MTR.OpenConfig()
         local vMinBtn = nil
         for i = 1, MTR.vaultWin:GetNumChildren() do
             local child = select(i, MTR.vaultWin:GetChildren())
-            if child:GetText and child:GetText() == "_" then vMinBtn = child break end
+            if child.GetText then
+                local t = child:GetText()
+                if t and t == "_" then vMinBtn = child break end
+            end
         end
         if vMinBtn then vMinBtn:Click() end
     end
