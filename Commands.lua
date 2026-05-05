@@ -134,6 +134,9 @@ SlashCmdList["MEKTOWN"]=function(msg)
         print("  /mek chars               - Open Character Vault (all alts)")
   print("  /mek radar               - Open GroupRadar group finder")
         print("  /mek lfg                 - Open Find Group / post LFG")
+        print("  /mek inspect             - Scan target build/gear/mythics")
+        print("  /mek inspect history    - Browse saved inspect reports")
+        print("  /mek inspect clear [n]  - Clear inspect history")
         print("  /mek gads start          - Start guild ad auto-posting")
         print("  /mek gads stop           - Stop guild ad auto-posting")
         print("  /mek gads now            - Post next guild ad immediately")
@@ -481,6 +484,41 @@ SlashCmdList["MEKTOWN"]=function(msg)
 
     elseif cmd=="lfg" then
         if MTR.OpenFindGroup then MTR.OpenFindGroup() end
+
+    elseif cmd=="inspect" then
+        local sub = (args or ""):lower():match("^%s*(.-)%s*$")
+        if sub=="" or sub=="scan" then
+            if MTR.InspectExport and MTR.InspectExport.RunScanAndShow then
+                MTR.InspectExport.RunScanAndShow()
+            else
+                MTR.MPE("InspectExport module not loaded.")
+            end
+        elseif sub=="history" then
+            local name = (args:match("^%s*history%s*(.-)%s*$") or "")
+            if name and name ~= "" then
+                local reps = MTR.InspectExport and MTR.InspectExport.GetReports(name) or {}
+                MTR.MP("Inspect history for |cffffff00" .. name .. "|r:")
+                for i, e in ipairs(reps) do
+                    print("  " .. i .. ". " .. (e.timestamp or "?"))
+                end
+                if #reps==0 then print("  (no saved reports)") end
+            else
+                local all = MTR.InspectExport and MTR.InspectExport.GetReports() or {}
+                local count = 0
+                for n, reps in pairs(all) do
+                    count = count + 1
+                    print("  |cffffff00" .. n .. "|r — " .. #reps .. " report(s)")
+                end
+                if count==0 then MTR.MP("No inspect history saved yet.") end
+            end
+        elseif sub:find("clear") then
+            local name = (args:match("^%s*clear%s*(.-)%s*$") or "")
+            if MTR.InspectExport and MTR.InspectExport.ClearReports then
+                MTR.InspectExport.ClearReports(name ~= "" and name or nil)
+            end
+        else
+            MTR.MP("/mek inspect [scan|history|clear [name]]")
+        end
 
     elseif cmd=="gads" then
         local sub = args:lower():match("^%s*(.-)%s*$")

@@ -23,5 +23,7 @@ UI_Widgets.lua
 UI_Config.lua
 UI_Member.lua
 UI_CharVault.lua
+InspectExport.lua
+UI_InspectExport.lua
 Minimap.lua
 Commands.lua

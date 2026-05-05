@@ -863,6 +863,9 @@ function MTR.InitDB()
         MekTownRecruitDB.guildBankLedger.entries = MekTownRecruitDB.guildBankLedger.entries or {}
         MekTownRecruitDB.guildBankLedger.meta = MekTownRecruitDB.guildBankLedger.meta or {}
     end
+    if type(MekTownRecruitDB.inspectReports) ~= "table" then
+        MekTownRecruitDB.inspectReports = {}
+    end
 
     -- Migration: clear any stale alert values from pre-8.0 saves so the user
     -- starts clean and can opt in to exactly what they want.
